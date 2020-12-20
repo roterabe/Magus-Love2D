@@ -155,12 +155,12 @@ end
 
 --- Project isometric position to cartesian position
 function utils.convert_isometric_to_screen(map, x, y)
-	local mapW    = map.width
+	local mapH    = map.height
 	local tileW   = map.tilewidth
 	local tileH   = map.tileheight
 	local tileX   = x / tileH
 	local tileY   = y / tileH
-	local offsetX = mapW * tileW / 2
+	local offsetX = mapH * tileW / 2
 
 	return
 		(tileX - tileY) * tileW / 2 + offsetX,
@@ -201,17 +201,6 @@ function utils.fix_transparent_color(tileset, path)
 		image_data:mapPixel(utils.pixel_function)
 		tileset.image = love.graphics.newImage(image_data)
 	end
-end
-
-function utils.deepCopy(t)
-	local copy = {}
-	for k,v in pairs(t) do
-		if type(v) == "table" then
-			v = utils.deepCopy(v)
-		end
-		copy[k] = v
-	end
-	return copy
 end
 
 return utils

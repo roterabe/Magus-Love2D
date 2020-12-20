@@ -52,7 +52,9 @@ return {
       opacity = 1,
       offsetx = 0,
       offsety = 0,
-      properties = {},
+      properties = {
+        ["collidable"] = true
+      },
       encoding = "lua",
       data = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -115,20 +117,24 @@ return {
       offsetx = 0,
       offsety = 0,
       tintcolor = { 13, 0, 0 },
-      properties = {},
+      properties = {
+        ["collidable"] = false
+      },
       objects = {
         {
           id = 4,
           name = "Player",
           type = "",
           shape = "rectangle",
-          x = 304,
-          y = 592,
-          width = 16,
-          height = 16,
+          x = 305.75,
+          y = 593.813,
+          width = 12.125,
+          height = 12.6875,
           rotation = 0,
           visible = true,
-          properties = {}
+          properties = {
+            ["collidable"] = false
+          }
         }
       }
     }

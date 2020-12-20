@@ -7,6 +7,9 @@
   <image source="Black.png" width="512" height="512"/>
  </tileset>
  <layer id="1" name="Tile Layer 1" width="64" height="48">
+  <properties>
+   <property name="collidable" type="bool" value="true"/>
+  </properties>
   <data encoding="csv">
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -59,6 +62,13 @@
 </data>
  </layer>
  <objectgroup id="2" name="Spawn Point" tintcolor="#0d0000">
-  <object id="4" name="Player" x="304" y="592" width="16" height="16"/>
+  <properties>
+   <property name="collidable" type="bool" value="false"/>
+  </properties>
+  <object id="4" name="Player" x="305.75" y="593.813" width="12.125" height="12.6875">
+   <properties>
+    <property name="collidable" type="bool" value="false"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

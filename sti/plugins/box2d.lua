@@ -38,15 +38,9 @@ return {
 			end
 
 			local currentBody = body
-			--dynamic are objects/players etc.
+
 			if userdata.properties.dynamic == true then
 				currentBody = love.physics.newBody(world, map.offsetx, map.offsety, 'dynamic')
-			-- static means it shouldn't move. Things like walls/ground.
-			elseif userdata.properties.static == true then
-				currentBody = love.physics.newBody(world, map.offsetx, map.offsety, 'static')
-			-- kinematic means that the object is static in the game world but effects other bodies
-			elseif userdata.properties.kinematic == true then
-				currentBody = love.physics.newBody(world, map.offsetx, map.offsety, 'kinematic')			
 			end
 
 			local fixture = love.physics.newFixture(currentBody, shape)
@@ -97,8 +91,8 @@ return {
 				properties = object.properties
 			}
 
-			o.r = object.rotation or 0
 			if o.shape == "rectangle" then
+				o.r       = object.rotation or 0
 				local cos = math.cos(math.rad(o.r))
 				local sin = math.sin(math.rad(o.r))
 				local oy  = 0
@@ -156,17 +150,6 @@ return {
 					addObjectToWorld(o.shape, triangle, userdata, tile or object)
 				end
 			elseif o.shape == "polygon" then
-				-- Recalculate collision polygons inside tiles
-				if tile then
-					local cos = math.cos(math.rad(o.r))
-					local sin = math.sin(math.rad(o.r))
-					for _, vertex in ipairs(o.polygon) do
-						vertex.x = vertex.x + o.x
-						vertex.y = vertex.y + o.y
-						vertex.x, vertex.y = utils.rotate_vertex(map, vertex, o.x, o.y, cos, sin)
-					end
-				end
-
 				local vertices  = getPolygonVertices(o)
 				local triangles = love.math.triangulate(vertices)
 
@@ -186,7 +169,6 @@ return {
 					if tile.objectGroup then
 						for _, object in ipairs(tile.objectGroup.objects) do
 							if object.properties.collidable == true then
-								object = utils.deepCopy(object)
 								object.dx = instance.x + object.x
 								object.dy = instance.y + object.y
 								calculateObjectPosition(object, instance)

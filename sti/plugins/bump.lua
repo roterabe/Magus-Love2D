@@ -9,7 +9,7 @@ local lg = require((...):gsub('plugins.bump', 'graphics'))
 return {
 	bump_LICENSE        = "MIT/X11",
 	bump_URL            = "https://github.com/karai17/Simple-Tiled-Implementation",
-	bump_VERSION        = "3.1.7.1",
+	bump_VERSION        = "3.1.7.0",
 	bump_DESCRIPTION    = "Bump hooks for STI.",
 
 	--- Adds each collidable tile to the Bump world.
@@ -139,15 +139,19 @@ return {
 					end
 				end
 			end
-		end
 
-		map.bump_world       = world
+		end
 		map.bump_collidables = collidables
 	end,
 
 	--- Remove layer
 	-- @param index to layer to be removed
-	bump_removeLayer = function(map, index)
+	-- @param world bump world the holds the tiles
+	-- @param tx Translate on X
+-- @param ty Translate on Y
+-- @param sx Scale on X
+-- @param sy Scale on Y
+	bump_removeLayer = function(map, index, world)
 		local layer = assert(map.layers[index], "Layer not found: " .. index)
 		local collidables = map.bump_collidables
 
@@ -160,7 +164,7 @@ return {
 				layer.properties.collidable == true
 				or obj.properties.collidable == true
 			) then
-				map.bump_world:remove(obj)
+				world:remove(obj)
 				table.remove(collidables, i)
 			end
 		end
@@ -172,14 +176,13 @@ return {
 	-- @param ty Translate on Y
 	-- @param sx Scale on X
 	-- @param sy Scale on Y
-	bump_draw = function(map, tx, ty, sx, sy)
+	bump_draw = function(map, world, tx, ty, sx, sy)
 		lg.push()
 		lg.scale(sx or 1, sy or sx or 1)
 		lg.translate(math.floor(tx or 0), math.floor(ty or 0))
 
-		local items = map.bump_world:getItems()
-		for _, item in ipairs(items) do
-			lg.rectangle("line", map.bump_world:getRect(item))
+		for _, collidable in pairs(map.bump_collidables) do
+			lg.rectangle("line", world:getRect(collidable))
 		end
 
 		lg.pop()

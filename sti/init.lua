@@ -187,7 +187,6 @@ function Map:setTiles(index, tileset, gid)
 			local id    = gid - tileset.firstgid
 			local quadX = (x - 1) * tileW + margin + (x - 1) * spacing
 			local quadY = (y - 1) * tileH + margin + (y - 1) * spacing
-			local type = ""
 			local properties, terrain, animation, objectGroup
 
 			for _, tile in pairs(tileset.tiles) do
@@ -195,7 +194,6 @@ function Map:setTiles(index, tileset, gid)
 					properties  = tile.properties
 					animation   = tile.animation
 					objectGroup = tile.objectGroup
-					type        = tile.type
 
 					if tile.terrain then
 						terrain = {}
@@ -211,7 +209,6 @@ function Map:setTiles(index, tileset, gid)
 				id          = id,
 				gid         = gid,
 				tileset     = index,
-				type        = type,
 				quad        = quad(
 					quadX,  quadY,
 					tileW,  tileH,
@@ -500,9 +497,6 @@ function Map:set_batches(layer, chunk)
 	end
 
 	if self.orientation == "orthogonal" or self.orientation == "isometric" then
-		local offsetX = chunk and chunk.x or 0
-		local offsetY = chunk and chunk.y or 0
-
 		local startX     = 1
 		local startY     = 1
 		local endX       = chunk and chunk.width  or layer.width
@@ -532,7 +526,7 @@ function Map:set_batches(layer, chunk)
 				end
 
 				if tile then
-					self:addNewLayerTile(layer, chunk, tile, x + offsetX, y + offsetY)
+					self:addNewLayerTile(layer, chunk, tile, x, y)
 				end
 			end
 		end
@@ -664,7 +658,7 @@ function Map:setObjectSpriteBatches(layer)
 				layer = layer,
 				gid   = tile.gid,
 				x     = tileX,
-				y     = tileY - oy,
+				y     = tileY,
 				r     = tileR,
 				oy    = oy
 			}
@@ -724,7 +718,7 @@ function Map:convertToCustomLayer(index)
 end
 
 --- Remove a Layer from the Layer stack
--- @param index Index or name of Layer to remove
+-- @param index Index or name of Layer to convert
 function Map:removeLayer(index)
 	local layer = assert(self.layers[index], "Layer not found: " .. index)
 
@@ -869,7 +863,7 @@ function Map:drawTileLayer(layer)
 	if layer.chunks then
 		for _, chunk in ipairs(layer.chunks) do
 			for _, batch in pairs(chunk.batches) do
-				lg.draw(batch, 0, 0)
+				lg.draw(batch, floor(chunk.x * self.tilewidth), floor(chunk.y * self.tileheight))
 			end
 		end
 
@@ -933,18 +927,16 @@ function Map:drawObjectLayer(layer)
 	end
 
 	for _, object in ipairs(layer.objects) do
-		if object.visible then
-			if object.shape == "rectangle" and not object.gid then
-				drawShape(object.rectangle, "rectangle")
-			elseif object.shape == "ellipse" then
-				drawShape(object.ellipse, "ellipse")
-			elseif object.shape == "polygon" then
-				drawShape(object.polygon, "polygon")
-			elseif object.shape == "polyline" then
-				drawShape(object.polyline, "polyline")
-			elseif object.shape == "point" then
-				lg.points(object.x, object.y)
-			end
+		if object.shape == "rectangle" and not object.gid then
+			drawShape(object.rectangle, "rectangle")
+		elseif object.shape == "ellipse" then
+			drawShape(object.ellipse, "ellipse")
+		elseif object.shape == "polygon" then
+			drawShape(object.polygon, "polygon")
+		elseif object.shape == "polyline" then
+			drawShape(object.polyline, "polyline")
+		elseif object.shape == "point" then
+			lg.points(object.x, object.y)
 		end
 	end
 
@@ -1368,32 +1360,18 @@ function Map:convertPixelToTile(x, y)
 		local sideLenX  = 0
 		local sideLenY  = 0
 
-		local colW       = tileW / 2
-		local rowH       = tileH / 2
 		if staggerX then
 			sideLenX = self.hexsidelength
 			x = x - (even and tileW or (tileW - sideLenX) / 2)
-			colW = colW - (colW  - sideLenX / 2) / 2
 		else
 			sideLenY = self.hexsidelength
 			y = y - (even and tileH or (tileH - sideLenY) / 2)
-			rowH = rowH - (rowH  - sideLenY / 2) / 2
 		end
 
+		local colW       = ((tileW - sideLenX) / 2) + sideLenX
+		local rowH       = ((tileH - sideLenY) / 2) + sideLenY
 		local referenceX = ceil(x) / (colW * 2)
 		local referenceY = ceil(y) / (rowH * 2)
-
-    -- If in staggered line, then shift reference by 0.5 of other axes
-		if staggerX then
-			if (floor(referenceX) % 2 == 0) == even then
-				referenceY = referenceY - 0.5
-			end
-		else
-			if (floor(referenceY) % 2 == 0) == even then
-				referenceX = referenceX - 0.5
-			end
-		end
-
 		local relativeX  = x - referenceX * colW * 2
 		local relativeY  = y - referenceY * rowH * 2
 		local centers
@@ -1439,17 +1417,17 @@ function Map:convertPixelToTile(x, y)
 		end
 
 		local offsetsStaggerX = {
-			{ x = 1, y =  1 },
+			{ x = 0, y =  0 },
+			{ x = 1, y = -1 },
+			{ x = 1, y =  0 },
 			{ x = 2, y =  0 },
-			{ x = 2, y =  1 },
-			{ x = 3, y =  1 },
 		}
 
 		local offsetsStaggerY = {
-			{ x =  1, y = 1 },
+			{ x =  0, y = 0 },
+			{ x = -1, y = 1 },
+			{ x =  0, y = 1 },
 			{ x =  0, y = 2 },
-			{ x =  1, y = 2 },
-			{ x =  1, y = 3 },
 		}
 
 		local offsets = staggerX and offsetsStaggerX or offsetsStaggerY
