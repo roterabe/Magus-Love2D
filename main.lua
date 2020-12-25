@@ -159,7 +159,7 @@ function love.load()
 
     layer.update = function(self, dt)
         -- 200 pixels per second
-        local speed = 200
+        local speed = 50
 
         -- Implement enemy smart movement.
         moveEnemy(self.enemy1, dt)
@@ -222,7 +222,7 @@ end
 function love.draw()
 
     -- Scale world.
-    local scale = 1
+    local scale = 3
     local screen_width = love.graphics.getWidth() / scale
     local screen_height = love.graphics.getHeight() / scale
 
