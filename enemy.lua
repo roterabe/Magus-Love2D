@@ -21,33 +21,33 @@ function Enemy:attack()
 end
 
 -- Prerequisites for movement.
-local direction = -1
+--local direction = -1
 local initialtime = love.timer.getTime()
 local smart = false
 local smartTimes = 0
 
 
 -- Default enemy movement.
-function Enemy:walk(goalX, goalY, dt)
+function Enemy:walk(goalX, goalY, dir, dt)
     local stoptimer = 5 -- 5 seconds
     local speed = 50
 
     timer = love.timer.getTime() - initialtime
     if timer > stoptimer then
-        smartTimes = smartTimes + 1
+        smartTimes = math.random(1, 9)
         initialtime = love.timer.getTime()
-        direction = smartTimes % 2 == 0 and direction * -1 or direction * 1
+        dir = smartTimes % 3 == 0 and dir * -1 or dir * 1
         smart = smart == false and true or false
 
     end
 
     if smart == true then
-        goalY = goalY + speed * dt * direction
+        goalY = goalY + speed * dt * dir
     else
-        goalX = goalX + speed * dt * direction
+        goalX = goalX + speed * dt * dir
     end
 
-    return goalX, goalY
+    return goalX, goalY, dir
 
 end
 
@@ -76,7 +76,7 @@ end
 
 -- Function to return what coordinates to chase.
 function Enemy:chase(actualX, actualY, playerX, playerY, dt)
-    local speed = 50
+    local speed = 80
     local goalX = playerX - actualX
     local goalY = playerY - actualY
     local distance = math.sqrt(goalX * goalX + goalY * goalY)
