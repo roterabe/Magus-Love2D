@@ -42,7 +42,8 @@ layer.player = {
     y = player.y,
     ox = sprite:getWidth() / 2,
     oy = sprite:getHeight() / 1.35,
-    collidable = true
+    collidable = true,
+    name = 'player'
 }
 
 layer.enemy1 = {
@@ -69,7 +70,7 @@ function drawDebug(scale, scale0)
     love.graphics.setColor(255, 255, 255)
 end
 
---Filter how to collide with various objects.
+-- Filter how to collide with various objects.
 local playerFilter = function(item, other)
     if other.name == 'andonov' then
         map.layers['andonov'].opacity = 1
@@ -80,7 +81,7 @@ local playerFilter = function(item, other)
     -- else return nil
 end
 
---Implement player movement.
+-- Implement player movement.
 function movePlayer(direction, p, dt)
     local speed = 50
     local goalX, goalY
@@ -125,9 +126,19 @@ function movePlayer(direction, p, dt)
 end
 
 -- Enemy movement across map. Trajectory is pretty simple (square movement).
-function moveEnemy(e, dt)
-    local goalX, goalY
-    goalX, goalY = enemies[1]:walk(e.x, e.y, dt)
+function moveEnemy(e, p, dt)
+    local goalX, goalY = enemies[1]:walk(e.x, e.y, dt)
+
+    local x1, y1 = e.x - 100, e.y - 100
+    local w, h = 200, 200
+    local items, len1 = world:queryRect(x1, y1, w, h)
+
+    for i = 1, len1 do
+        if items[i].name == 'player' then
+            print(len1)
+            goalX, goalY = enemies[1]:chase(e.x, e.y, p.x, p.y, dt)
+        end
+    end
 
     local actualX, actualY, cols, len = world:move(e, goalX, goalY, playerFilter)
     e.x, e.y = actualX, actualY
@@ -136,10 +147,10 @@ function moveEnemy(e, dt)
 
     for i = 1, len do
         if cols[i].other.name == 'andonov' then
-            print('collided with ' .. tostring(cols[i].other.name))
+            -- print('collided with ' .. tostring(cols[i].other.name))
 
         end
-        print('collided with ' .. tostring(cols[i].other))
+        -- print('collided with ' .. tostring(cols[i].other))
     end
 end
 
@@ -159,11 +170,11 @@ function love.load()
 
     layer.update = function(self, dt)
         -- 200 pixels per second
-        local speed = 50
+        local speed = 200
 
         -- Implement enemy smart movement.
-        moveEnemy(self.enemy1, dt)
-        moveEnemy(self.enemy2, dt)
+        moveEnemy(self.enemy1, self.player, dt)
+        moveEnemy(self.enemy2, self.player, dt)
 
         -- Move player up.
         if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
@@ -200,7 +211,7 @@ function love.load()
         love.graphics.draw(self.enemy1.sprite, math.floor(self.enemy1.x), math.floor(self.enemy1.y), 0, 0.1, 0.1,
             self.enemy1.ox, self.enemy1.oy)
 
-            love.graphics.draw(self.enemy2.sprite, math.floor(self.enemy2.x), math.floor(self.enemy2.y), 0, 0.1, 0.1,
+        love.graphics.draw(self.enemy2.sprite, math.floor(self.enemy2.x), math.floor(self.enemy2.y), 0, 0.1, 0.1,
             self.enemy2.ox, self.enemy2.oy)
 
         -- Temporarily draw a point at our location so we know
@@ -222,7 +233,7 @@ end
 function love.draw()
 
     -- Scale world.
-    local scale = 3
+    local scale = 1
     local screen_width = love.graphics.getWidth() / scale
     local screen_height = love.graphics.getHeight() / scale
 
