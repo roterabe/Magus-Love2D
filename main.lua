@@ -2,12 +2,14 @@ local sti = require 'sti'
 local bump = require 'bump.bump'
 local bump_debug = require 'bump.bump_debug'
 local enemy = require 'enemy'
+local gamera = require 'gamera-master.gamera'
 
 local cellsize = 16
 local timer = 5
 local initialtime = love.timer.getTime()
 
 local map = sti('assets/dungeon/dungeon.lua', {'bump'})
+local cam = gamera.new(0, 0, 2000, 2000)
 
 local world = bump.newWorld(cellsize)
 
@@ -52,7 +54,8 @@ layer.enemy1 = {
     y = enemies[1].yPos,
     ox = enemies[1].sprite:getWidth() / 2,
     oy = enemies[1].sprite:getHeight() / 1.35,
-    collidable = true
+    collidable = true,
+    dir = 1
 }
 
 layer.enemy2 = {
@@ -61,7 +64,8 @@ layer.enemy2 = {
     y = enemies[2].yPos,
     ox = enemies[2].sprite:getWidth() / 2,
     oy = enemies[2].sprite:getHeight() / 1.35,
-    collidable = true
+    collidable = true,
+    dir = -1
 }
 
 -- Debug map with the help of Bump. Custom implementation.
@@ -104,14 +108,14 @@ function movePlayer(direction, p, dt)
 
     -- Scan square around character and return what's around him.
     local x1, y1 = p.x - 100, p.y - 100
-    local x2, y2 = p.x + 100, p.y + 100
-    local items, len1 = world:querySegment(x1, y1, x2, y2)
+    local w, h = 200, 200
+    local items, len1 = world:queryRect(x1, y1, w, h)
 
-    -- Tried implementing fog of war.. Not possible at this time.
+    -- Tried implementing fog of war.. Not possible at this time.. Beginning again...
     for i = 1, len1 do
-        if items[i].name == 'ground' or items[i].name == 'decorations' then
-
-        end
+        --[[ local tileX, tileY = map:convertPixelToTile(items[i].x, items[i].y)
+        print(map:getTileProperties('ground', tileX, tileY)) ]]
+        -- print(items[i].x)
     end
 
     -- deal with the collisions.
@@ -127,7 +131,8 @@ end
 
 -- Enemy movement across map. Trajectory is pretty simple (square movement).
 function moveEnemy(e, p, dt)
-    local goalX, goalY = enemies[1]:walk(e.x, e.y, dt)
+    local goalX, goalY
+    goalX, goalY, e.dir = enemies[1]:walk(e.x, e.y, e.dir, dt)
 
     local x1, y1 = e.x - 100, e.y - 100
     local w, h = 200, 200
@@ -135,7 +140,7 @@ function moveEnemy(e, p, dt)
 
     for i = 1, len1 do
         if items[i].name == 'player' then
-            print(len1)
+            -- print(items[i].info)
             goalX, goalY = enemies[1]:chase(e.x, e.y, p.x, p.y, dt)
         end
     end
@@ -170,7 +175,7 @@ function love.load()
 
     layer.update = function(self, dt)
         -- 200 pixels per second
-        local speed = 200
+        local speed = 50
 
         -- Implement enemy smart movement.
         moveEnemy(self.enemy1, self.player, dt)
@@ -227,13 +232,14 @@ function love.load()
 end
 
 function love.update(dt)
+    --map:resize(700, 700)
     map:update(dt)
 end
 
 function love.draw()
 
     -- Scale world.
-    local scale = 1
+    local scale = 3
     local screen_width = love.graphics.getWidth() / scale
     local screen_height = love.graphics.getHeight() / scale
 
