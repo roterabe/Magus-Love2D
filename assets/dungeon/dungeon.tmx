@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.4" tiledversion="1.4.3" orientation="orthogonal" renderorder="right-down" width="125" height="125" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="16728">
  <editorsettings>
-  <export target="dungeon.lua" format="lua"/>
+  <export target="dungeon2.lua" format="lua"/>
  </editorsettings>
  <tileset firstgid="1" name="floor" tilewidth="16" tileheight="16" tilecount="256" columns="16">
   <image source="0x72_16x16DungeonTileset_walls.v2.png" width="256" height="256"/>
@@ -451,6 +451,10 @@
 </data>
  </layer>
  <objectgroup id="6" name="fogofwar">
+  <properties>
+   <property name="collidable" type="bool" value="true"/>
+   <property name="foggy" type="bool" value="true"/>
+  </properties>
   <object id="81" gid="513" x="-1.5" y="16" width="16" height="16"/>
   <object id="82" gid="513" x="14.5" y="32" width="16" height="16"/>
   <object id="83" gid="513" x="14.5" y="16" width="16" height="16"/>
