@@ -8,7 +8,7 @@ local cellsize = 16
 local timer = 5
 local initialtime = love.timer.getTime()
 
-local map = sti('assets/dungeon/dungeon.lua', {'bump'})
+local map = sti('assets/dungeon/new_dungeon1.lua', {'bump'})
 local cam = gamera.new(0, 0, 2000, 2000)
 
 local world = bump.newWorld(cellsize)
@@ -26,7 +26,7 @@ enemies[2]:setSprite('assets/sprite.png')
 -- Enemy:attack()
 
 -- Create layer for characters.
-local layer = map:addCustomLayer("Sprites", 4)
+local layer = map:addCustomLayer("Sprites", 5)
 
 -- Position main character on spawn point.
 local player
@@ -79,6 +79,9 @@ local playerFilter = function(item, other)
     if other.name == 'andonov' then
         map.layers['andonov'].opacity = 1
         return 'cross'
+    elseif other.name == 'Black' then
+        -- map:swapTile(map.tileInstances[gid], map.tiles[1])
+        return 'cross'
     else
         return 'slide'
     end
@@ -112,19 +115,30 @@ function movePlayer(direction, p, dt)
     local items, len1 = world:queryRect(x1, y1, w, h)
 
     -- Tried implementing fog of war.. Not possible at this time.. Beginning again...
-    for i = 1, len1 do
-        --[[ local tileX, tileY = map:convertPixelToTile(items[i].x, items[i].y)
-        print(map:getTileProperties('ground', tileX, tileY)) ]]
-        -- print(items[i].x)
-    end
+    --[[ for i = 1, len1 do
+        if items[i].x ~= nil and items[i].y ~= nil then
+            --world.get
+            local nx, ny = map:convertPixelToTile(items[i].x, items[i].y)
+            nx, ny = math.floor(nx), math.floor(ny)
+            local xcoord, ycoord = items[i].x, items[i].y
+
+            local tileInstance = map:getInstanceByPixel(xcoord, ycoord, 'fog')
+            if tileInstance ~= nil then
+                map:removeInstance(tileInstance)
+                print('success')
+            end
+        end
+    end ]]
 
     -- deal with the collisions.
     for i = 1, len do
         if cols[i].other.name == 'andonov' then
             print('collided with ' .. tostring(cols[i].other.name))
 
+        elseif cols[i].other.name == 'Black' then
+        else
+            print('collided with ' .. tostring(cols[i].other))
         end
-        print('collided with ' .. tostring(cols[i].other))
     end
 
 end
@@ -232,7 +246,7 @@ function love.load()
 end
 
 function love.update(dt)
-    --map:resize(700, 700)
+    -- map:resize(700, 700)
     map:update(dt)
 end
 
@@ -242,12 +256,15 @@ function love.draw()
     local scale = 3
     local screen_width = love.graphics.getWidth() / scale
     local screen_height = love.graphics.getHeight() / scale
+    local sw, sh = 250, 200
 
     -- Translate world so that player is always centred
     local player = map.layers["Sprites"].player
-    local tx = math.floor(player.x - screen_width / 2)
-    local ty = math.floor(player.y - screen_height / 2)
+    local tx = math.floor(player.x - sw / 2)
+    local ty = math.floor(player.y - sh / 2)
 
+    -- As basic as fog of war can get. Thank god I wasted 10 hours on more unoptimal solutions.
+    map:resize(250, 200)
     map:draw(-tx, -ty, scale, scale)
 
     -- Collision map.
