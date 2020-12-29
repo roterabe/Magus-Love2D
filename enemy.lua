@@ -4,7 +4,9 @@ Enemy = {
     yPos = 0,
     width = 16,
     height = 16,
-    flip = false
+    flip = false,
+    damage = 10,
+    health = 100
 }
 
 -- Initialize enemy object.
@@ -16,8 +18,9 @@ function Enemy:new(o)
 end
 
 -- Self explanatory.
-function Enemy:attack()
-
+function Enemy:attack(po)
+    local result = po.health - self.damage
+    return result
 end
 
 -- Prerequisites for movement.

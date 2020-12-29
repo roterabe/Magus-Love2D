@@ -1,18 +1,34 @@
+--TODO Make enemy name and object class somehow integrated so as to be found by scan.
+
 local sti = require 'sti'
 local bump = require 'bump.bump'
 local bump_debug = require 'bump.bump_debug'
 local enemy = require 'enemy'
 local gamera = require 'gamera-master.gamera'
+local character = require 'player'
 
 local cellsize = 16
 local timer = 5
 local initialtime = love.timer.getTime()
 
 local map = sti('assets/dungeon/new_dungeon1.lua', {'bump'})
-local cam = gamera.new(0, 0, 2000, 2000)
 
+-- Create layer for characters.
+local layer = map:addCustomLayer("Sprites", 5)
+
+-- Position main character on spawn point.
+local spawn
+for k, object in pairs(map.objects) do
+    if object.name == "Player" then
+        spawn = object
+        break
+    end
+end
+
+-- Create physics world.
 local world = bump.newWorld(cellsize)
 
+-- Generate enemies.
 local enemies = {}
 for i = 1, 2 do
     enemies[i] = enemy:new()
@@ -23,27 +39,19 @@ enemies[2]:setPos(600, 600)
 
 enemies[1]:setSprite('assets/sprite.png')
 enemies[2]:setSprite('assets/sprite.png')
--- Enemy:attack()
 
--- Create layer for characters.
-local layer = map:addCustomLayer("Sprites", 5)
+local player = character:new()
 
--- Position main character on spawn point.
-local player
-for k, object in pairs(map.objects) do
-    if object.name == "Player" then
-        player = object
-        break
-    end
-end
+player:setPos(spawn.x, spawn.y)
+player:setSprite('assets/sprite.png')
 
-local sprite = love.graphics.newImage('assets/sprite.png')
+-- Create sprite objects to display on map.
 layer.player = {
-    sprite = sprite,
-    x = player.x,
-    y = player.y,
-    ox = sprite:getWidth() / 2,
-    oy = sprite:getHeight() / 1.35,
+    sprite = player.sprite,
+    x = player.xPos,
+    y = player.yPos,
+    ox = player.sprite:getWidth() / 2,
+    oy = player.sprite:getHeight() / 1.35,
     collidable = true,
     name = 'player'
 }
@@ -55,7 +63,8 @@ layer.enemy1 = {
     ox = enemies[1].sprite:getWidth() / 2,
     oy = enemies[1].sprite:getHeight() / 1.35,
     collidable = true,
-    dir = 1
+    dir = 1,
+    name = 'enemy1'
 }
 
 layer.enemy2 = {
@@ -65,7 +74,8 @@ layer.enemy2 = {
     ox = enemies[2].sprite:getWidth() / 2,
     oy = enemies[2].sprite:getHeight() / 1.35,
     collidable = true,
-    dir = -1
+    dir = -1,
+    name = 'enemy2'
 }
 
 -- Debug map with the help of Bump. Custom implementation.
@@ -88,23 +98,14 @@ local playerFilter = function(item, other)
     -- else return nil
 end
 
--- Implement player movement.
-function movePlayer(direction, p, dt)
-    local speed = 50
-    local goalX, goalY
+-- Calculate distance between two points.
+function dist(x1, y1, x2, y2)
+    return ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
+end
 
-    if direction == 'up' then
-        goalX, goalY = p.x, p.y - speed * dt
-    end
-    if direction == 'down' then
-        goalX, goalY = p.x, p.y + speed * dt
-    end
-    if direction == 'left' then
-        goalX, goalY = p.x - speed * dt, p.y
-    end
-    if direction == 'right' then
-        goalX, goalY = p.x + speed * dt, p.y
-    end
+-- Implement player movement.
+function movePlayer(direction, po, p, dt)
+    local goalX, goalY = po:move(direction, p, dt)
 
     local actualX, actualY, cols, len = world:move(p, goalX, goalY, playerFilter)
     p.x, p.y = actualX, actualY
@@ -136,6 +137,7 @@ function movePlayer(direction, p, dt)
             print('collided with ' .. tostring(cols[i].other.name))
 
         elseif cols[i].other.name == 'Black' then
+
         else
             print('collided with ' .. tostring(cols[i].other))
         end
@@ -144,9 +146,9 @@ function movePlayer(direction, p, dt)
 end
 
 -- Enemy movement across map. Trajectory is pretty simple (square movement).
-function moveEnemy(e, p, dt)
+function moveEnemy(eo, po, e, p, dt)
     local goalX, goalY
-    goalX, goalY, e.dir = enemies[1]:walk(e.x, e.y, e.dir, dt)
+    goalX, goalY, e.dir = eo:walk(e.x, e.y, e.dir, dt)
 
     local x1, y1 = e.x - 100, e.y - 100
     local w, h = 200, 200
@@ -155,10 +157,21 @@ function moveEnemy(e, p, dt)
     for i = 1, len1 do
         if items[i].name == 'player' then
             -- print(items[i].info)
-            goalX, goalY = enemies[1]:chase(e.x, e.y, p.x, p.y, dt)
+            goalX, goalY = eo:chase(e.x, e.y, p.x, p.y, dt)
         end
     end
 
+    if dist(e.x, e.y, p.x, p.y) < 10 then
+        if po.health <= 0 then
+            po.health = 210
+            local oX, oY = po:resetPos()
+            p.x, p.y = oX, oY
+            world:remove(p)
+            world:add(p, p.x, p.y, p.sprite:getWidth() / 100, p.sprite:getHeight() / 50)
+        end
+        po.health = eo:attack(po)
+        print('Miss me with that gay shit.')
+    end
     local actualX, actualY, cols, len = world:move(e, goalX, goalY, playerFilter)
     e.x, e.y = actualX, actualY
 
@@ -173,15 +186,32 @@ function moveEnemy(e, p, dt)
     end
 end
 
+function enemySelector(po, p, dt)
+    local x1, y1 = p.x - 100, p.y - 100
+    local w, h = 200, 200
+    local items, len = world:queryRect(x1, y1, w, h)
+
+    for i = 1, len do
+        if items[i].name == 'enemy' then
+            local target = items[i]
+            if dist(p.x, p.y, target.x, target.y) < 10 then
+                
+            end
+        end
+    end
+end
+
 -- Load various things in love and the game itself.
 function love.load()
 
     love.graphics.setBackgroundColor(0, 0, 0)
-
+    local font = love.graphics.newFont()
+    love.graphics.setFont(font, 144)
     map:bump_init(world)
 
     -- Add characters to collision world.
-    world:add(layer.player, layer.player.x, layer.player.y, sprite:getWidth() / 100, sprite:getHeight() / 50)
+    world:add(layer.player, layer.player.x, layer.player.y, player.sprite:getWidth() / 100,
+        player.sprite:getHeight() / 50)
     world:add(layer.enemy1, layer.enemy1.x, layer.enemy1.y, enemies[1].sprite:getWidth() / 100,
         enemies[1].sprite:getHeight() / 50)
     world:add(layer.enemy2, layer.enemy2.x, layer.enemy2.y, enemies[2].sprite:getWidth() / 100,
@@ -192,32 +222,36 @@ function love.load()
         local speed = 50
 
         -- Implement enemy smart movement.
-        moveEnemy(self.enemy1, self.player, dt)
-        moveEnemy(self.enemy2, self.player, dt)
+        moveEnemy(enemies[1], player, self.enemy1, self.player, dt)
+        moveEnemy(enemies[2], player, self.enemy2, self.player, dt)
 
         -- Move player up.
-        if love.keyboard.isDown("w") or love.keyboard.isDown("up") then
+        if love.keyboard.isDown('w') or love.keyboard.isDown("up") then
             self.player.y = self.player.y - speed * dt
-            movePlayer('up', self.player, dt)
+            movePlayer('up', player, self.player, dt)
 
         end
 
         -- Move player down.
-        if love.keyboard.isDown("s") or love.keyboard.isDown("down") then
+        if love.keyboard.isDown('s') or love.keyboard.isDown("down") then
             self.player.y = self.player.y + speed * dt
-            movePlayer('down', self.player, dt)
+            movePlayer('down', player, self.player, dt)
         end
 
         -- Move player left.
-        if love.keyboard.isDown("a") or love.keyboard.isDown("left") then
+        if love.keyboard.isDown('a') or love.keyboard.isDown("left") then
             self.player.x = self.player.x - speed * dt
-            movePlayer('left', self.player, dt)
+            movePlayer('left', player, self.player, dt)
         end
 
         -- Move player right.
-        if love.keyboard.isDown("d") or love.keyboard.isDown("right") then
+        if love.keyboard.isDown('d') or love.keyboard.isDown("right") then
             self.player.x = self.player.x + speed * dt
-            movePlayer('right', self.player, dt)
+            movePlayer('right', player, self.player, dt)
+        end
+
+        if love.keyboard.isDown('k') then
+            enemySelector(player, self.player, dt)
         end
 
     end
@@ -251,6 +285,8 @@ function love.update(dt)
 end
 
 function love.draw()
+
+    love.graphics.print(player.health, 980, 710)
 
     -- Scale world.
     local scale = 3
