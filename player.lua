@@ -6,7 +6,8 @@ Player = {
     height = 16,
     flip = false,
     damage = 10,
-    health = 200
+    health = 200,
+    alive = true
 }
 
 -- Initialize player object.

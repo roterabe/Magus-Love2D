@@ -6,7 +6,8 @@ Enemy = {
     height = 16,
     flip = false,
     damage = 10,
-    health = 100
+    health = 100,
+    alive = true
 }
 
 -- Initialize enemy object.

@@ -1,5 +1,4 @@
---TODO Make enemy name and object class somehow integrated so as to be found by scan.
-
+-- TODO Make enemy name and object class somehow integrated so as to be found by scan.
 local sti = require 'sti'
 local bump = require 'bump.bump'
 local bump_debug = require 'bump.bump_debug'
@@ -53,7 +52,8 @@ layer.player = {
     ox = player.sprite:getWidth() / 2,
     oy = player.sprite:getHeight() / 1.35,
     collidable = true,
-    name = 'player'
+    name = 'player',
+    ob = player
 }
 
 layer.enemy1 = {
@@ -64,7 +64,8 @@ layer.enemy1 = {
     oy = enemies[1].sprite:getHeight() / 1.35,
     collidable = true,
     dir = 1,
-    name = 'enemy1'
+    name = 'enemy',
+    ob = enemies[1]
 }
 
 layer.enemy2 = {
@@ -75,7 +76,8 @@ layer.enemy2 = {
     oy = enemies[2].sprite:getHeight() / 1.35,
     collidable = true,
     dir = -1,
-    name = 'enemy2'
+    name = 'enemy',
+    ob = enemies[2]
 }
 
 -- Debug map with the help of Bump. Custom implementation.
@@ -195,7 +197,12 @@ function enemySelector(po, p, dt)
         if items[i].name == 'enemy' then
             local target = items[i]
             if dist(p.x, p.y, target.x, target.y) < 10 then
-                
+                if items[i].ob.health <= 0 then
+                    items[i].ob.alive = false
+                    world:remove(items[i])
+                    break
+                end
+                items[i].ob.health = po:attack(items[i].ob)
             end
         end
     end
@@ -222,8 +229,12 @@ function love.load()
         local speed = 50
 
         -- Implement enemy smart movement.
-        moveEnemy(enemies[1], player, self.enemy1, self.player, dt)
-        moveEnemy(enemies[2], player, self.enemy2, self.player, dt)
+        if self.enemy1.ob.alive == true then
+            moveEnemy(enemies[1], player, self.enemy1, self.player, dt)
+        end
+        if self.enemy2.ob.alive == true then
+            moveEnemy(enemies[2], player, self.enemy2, self.player, dt)
+        end
 
         -- Move player up.
         if love.keyboard.isDown('w') or love.keyboard.isDown("up") then
@@ -261,12 +272,15 @@ function love.load()
         love.graphics.draw(self.player.sprite, math.floor(self.player.x), math.floor(self.player.y), 0, 0.1, 0.1,
             self.player.ox, self.player.oy)
 
-        love.graphics.draw(self.enemy1.sprite, math.floor(self.enemy1.x), math.floor(self.enemy1.y), 0, 0.1, 0.1,
-            self.enemy1.ox, self.enemy1.oy)
+        if self.enemy1.ob.alive then
+            love.graphics.draw(self.enemy1.sprite, math.floor(self.enemy1.x), math.floor(self.enemy1.y), 0, 0.1, 0.1,
+                self.enemy1.ox, self.enemy1.oy)
+        end
 
-        love.graphics.draw(self.enemy2.sprite, math.floor(self.enemy2.x), math.floor(self.enemy2.y), 0, 0.1, 0.1,
-            self.enemy2.ox, self.enemy2.oy)
-
+        if self.enemy2.ob.alive then
+            love.graphics.draw(self.enemy2.sprite, math.floor(self.enemy2.x), math.floor(self.enemy2.y), 0, 0.1, 0.1,
+                self.enemy2.ox, self.enemy2.oy)
+        end
         -- Temporarily draw a point at our location so we know
         -- that our sprite is offset properly.
         -- love.graphics.setPointSize(5)
