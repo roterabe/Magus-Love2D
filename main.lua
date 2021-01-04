@@ -42,15 +42,18 @@ enemies[2]:setSprite('assets/sprite.png')
 local player = character:new()
 
 player:setPos(spawn.x, spawn.y)
-player:setSprite('assets/sprite.png')
+local spr_list = love.graphics.newImage('assets/dungeon/0x72_16x16DungeonTileset.v4.png')
+local char_spr = love.graphics.newQuad(80, 144, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+-- player:setSprite('assets/sprite.png')
+player:setSprite(char_spr)
 
 -- Create sprite objects to display on map.
 layer.player = {
     sprite = player.sprite,
     x = player.xPos,
     y = player.yPos,
-    ox = player.sprite:getWidth() / 2,
-    oy = player.sprite:getHeight() / 1.35,
+    -- ox = player.sprite:getWidth() / 2,
+    -- oy = player.sprite:getHeight() / 1.35,
     collidable = true,
     name = 'player',
     ob = player
@@ -217,12 +220,11 @@ function love.load()
     map:bump_init(world)
 
     -- Add characters to collision world.
-    world:add(layer.player, layer.player.x, layer.player.y, player.sprite:getWidth() / 100,
-        player.sprite:getHeight() / 50)
+    world:add(layer.player, layer.player.x, layer.player.y, 16 / 160, 16 / 160)
     world:add(layer.enemy1, layer.enemy1.x, layer.enemy1.y, enemies[1].sprite:getWidth() / 100,
-        enemies[1].sprite:getHeight() / 50)
+        layer.enemy1.ob.sprite:getHeight() / 50)
     world:add(layer.enemy2, layer.enemy2.x, layer.enemy2.y, enemies[2].sprite:getWidth() / 100,
-        enemies[2].sprite:getHeight() / 50)
+        layer.enemy2.ob.sprite:getHeight() / 50)
 
     layer.update = function(self, dt)
         -- 200 pixels per second
@@ -230,47 +232,47 @@ function love.load()
 
         -- Implement enemy smart movement.
         if self.enemy1.ob.alive == true then
-            moveEnemy(enemies[1], player, self.enemy1, self.player, dt)
+            moveEnemy(self.enemy1.ob, self.player.ob, self.enemy1, self.player, dt)
         end
         if self.enemy2.ob.alive == true then
-            moveEnemy(enemies[2], player, self.enemy2, self.player, dt)
+            moveEnemy(self.enemy2.ob, self.player.ob, self.enemy2, self.player, dt)
         end
 
         -- Move player up.
         if love.keyboard.isDown('w') or love.keyboard.isDown("up") then
             self.player.y = self.player.y - speed * dt
-            movePlayer('up', player, self.player, dt)
+            movePlayer('up', self.player.ob, self.player, dt)
 
         end
 
         -- Move player down.
         if love.keyboard.isDown('s') or love.keyboard.isDown("down") then
             self.player.y = self.player.y + speed * dt
-            movePlayer('down', player, self.player, dt)
+            movePlayer('down', self.player.ob, self.player, dt)
         end
 
         -- Move player left.
         if love.keyboard.isDown('a') or love.keyboard.isDown("left") then
             self.player.x = self.player.x - speed * dt
-            movePlayer('left', player, self.player, dt)
+            movePlayer('left', self.player.ob, self.player, dt)
         end
 
         -- Move player right.
         if love.keyboard.isDown('d') or love.keyboard.isDown("right") then
             self.player.x = self.player.x + speed * dt
-            movePlayer('right', player, self.player, dt)
+            movePlayer('right', self.player.ob, self.player, dt)
         end
 
         if love.keyboard.isDown('k') then
-            enemySelector(player, self.player, dt)
+            enemySelector(self.player.ob, self.player, dt)
         end
 
     end
 
     -- Draw player and the rest of the characters on layer Sprite.
     layer.draw = function(self)
-        love.graphics.draw(self.player.sprite, math.floor(self.player.x), math.floor(self.player.y), 0, 0.1, 0.1,
-            self.player.ox, self.player.oy)
+        love.graphics.draw(spr_list, self.player.sprite, math.floor(self.player.x), math.floor(self.player.y), 0, 1, 1,
+            16 / 2, 16 / 1.1)
 
         if self.enemy1.ob.alive then
             love.graphics.draw(self.enemy1.sprite, math.floor(self.enemy1.x), math.floor(self.enemy1.y), 0, 0.1, 0.1,

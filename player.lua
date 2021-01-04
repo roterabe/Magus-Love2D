@@ -39,7 +39,8 @@ end
 
 -- Set player sprite.
 function Player:setSprite(path)
-    self.sprite = love.graphics.newImage(path)
+    self.sprite = path
+    --self.sprite = love.graphics.newImage(path)
 end
 
 -- Move player
