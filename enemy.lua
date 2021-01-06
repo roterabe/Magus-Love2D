@@ -4,8 +4,8 @@ Enemy = {
     yPos = 0,
     width = 16,
     height = 16,
-    flip = false,
-    damage = 10,
+    dir = 1,
+    damage = 1,
     health = 100,
     alive = true
 }
@@ -64,13 +64,14 @@ function Enemy:setPos(xPos, yPos)
 end
 
 -- Flip sprite.
-function Enemy:flip(flip)
-    self.flip = flip
+function Enemy:flip(direction)
+    self.dir = direction
 end
 
 -- Set enemy sprite.
 function Enemy:setSprite(path)
-    self.sprite = love.graphics.newImage(path)
+    self.sprite = path
+    --self.sprite = love.graphics.newImage(path)
 end
 
 -- Calculate distance between two points.

@@ -4,9 +4,9 @@ Player = {
     yPos = 0,
     width = 16,
     height = 16,
-    flip = false,
     damage = 10,
-    health = 200,
+    health = 420,
+    dir = 1,
     alive = true
 }
 
@@ -40,7 +40,7 @@ end
 -- Set player sprite.
 function Player:setSprite(path)
     self.sprite = path
-    --self.sprite = love.graphics.newImage(path)
+    -- self.sprite = love.graphics.newImage(path)
 end
 
 -- Move player
@@ -73,6 +73,10 @@ end
 -- Calculate distance between two points.
 function dist(x1, y1, x2, y2)
     return ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
+end
+
+function Player:flip(direction)
+    self.dir = direction
 end
 
 return Player
