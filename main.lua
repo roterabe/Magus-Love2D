@@ -17,7 +17,9 @@ end
 
 function love.draw()
 
-    --love.graphics.print(player.health, 980, 710)
+    love.graphics.print('AD: ~30 DPS', 840, 710)
+    love.graphics.print('Health:', 920, 710)
+    love.graphics.print(map:drawHealth(), 980, 710)
 
     -- Scale world.
     local scale = 3
@@ -26,7 +28,7 @@ function love.draw()
     local sw, sh = 250, 200
 
     -- Translate world so that player is always centred
-    local player = map.layers["Sprites"].player
+    local player = map.layers["Sprites"].sprites.player
     local tx = math.floor(player.x - sw / 2)
     local ty = math.floor(player.y - sh / 2)
 
