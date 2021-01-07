@@ -17,7 +17,7 @@ end
 
 function love.draw()
 
-    love.graphics.print('AD: ~30 DPS', 850, 710)
+    love.graphics.print('AD: ~30 DPS', 840, 710)
     love.graphics.print('Health:', 920, 710)
     love.graphics.print(map:drawHealth(), 980, 710)
 
