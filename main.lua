@@ -1,4 +1,4 @@
--- TODO Make enemy name and object class somehow integrated so as to be found by scan.
+--TODO Make game cool.
 local map = require 'map'
 
 -- Load various things in love and the game itself.
@@ -17,7 +17,7 @@ end
 
 function love.draw()
 
-    love.graphics.print('AD: ~30 DPS', 840, 710)
+    love.graphics.print('AD: ~30 DPS', 850, 710)
     love.graphics.print('Health:', 920, 710)
     love.graphics.print(map:drawHealth(), 980, 710)
 
