@@ -6,10 +6,13 @@ local gamera = require 'gamera-master.gamera'
 local character = require 'player'
 
 local cellsize = 16
+local map_path = 'assets/dungeon/level.lua'
+local level = 'level'
 -- local timer = 5
 -- local initialtime = love.timer.getTime()
 
-local map = sti('assets/dungeon/new_dungeon1.lua', {'bump'})
+local map = sti(map_path, {'bump'}, 0, 0)
+local map0 = sti('assets/dungeon/dummy.lua', {'bump'}, 1500, 1500)
 
 -- Create physics world.
 local world = bump.newWorld(cellsize)
@@ -38,6 +41,10 @@ local playerFilter = function(item, other)
         return 'cross'
     elseif other.name == 'Black' then
         -- map:swapTile(map.tileInstances[gid], map.tiles[1])
+        return 'cross'
+    elseif other.name == 'ladder' then
+        level = 'dummy'
+        map_path = 'assets/dungeon/dummy.lua'
         return 'cross'
     else
         return 'slide'
@@ -83,7 +90,7 @@ function movePlayer(direction, po, p, dt)
         if cols[i].other.name == 'andonov' then
             print('collided with ' .. tostring(cols[i].other.name))
 
-        elseif cols[i].other.name == 'Black' then
+        elseif cols[i].other.name == 'Stairs' then
 
         else
             print('collided with ' .. tostring(cols[i].other))
@@ -232,9 +239,10 @@ end
 
 map:bump_init(world)
 
--- Add characters to collision world.
+-- Add character to collision world.
 world:add(layer.sprites.player, layer.sprites.player.x, layer.sprites.player.y, 16 / 10, 16 / 50)
 
+-- -- Add enemies to collision world.
 for key, value in pairs(layer.sprites) do
     if value.name == 'enemy' then
         world:add(value, value.x, value.y, 16 / 10, 16 / 50)
@@ -247,7 +255,7 @@ map:removeLayer("Spawn Point")
 -- Draw player and the rest of the characters on layer Sprite.
 layer.draw = function(self)
     love.graphics.draw(spr_list, self.sprites.player.sprite, math.floor(self.sprites.player.x),
-        math.floor(self.sprites.player.y), 0, self.sprites.player.ob.dir, 1, 16 / 2, 16 / 1.4)
+        math.floor(self.sprites.player.y), 0, self.sprites.player.ob.dir, 1, 16 / 2, 16 / 1.1)
 
     for i = 1, 100 do
         for key, value in pairs(self.sprites) do
@@ -267,7 +275,7 @@ layer.draw = function(self)
 end
 
 layer.update = function(self, dt)
-    -- 200 pixels per second
+    -- 50 pixels per second
     local speed = 50
 
     -- Implement enemy smart movement.

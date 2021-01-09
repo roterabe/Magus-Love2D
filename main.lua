@@ -11,7 +11,6 @@ function love.load()
 end
 
 function love.update(dt)
-    -- map:resize(700, 700)
     map:update(dt)
 end
 
