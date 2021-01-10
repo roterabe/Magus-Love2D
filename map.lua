@@ -146,7 +146,8 @@ function moveEnemy(eo, po, e, p, dt)
     -- Direction switching implemented. Fixed collision release teleportation.
 
     for i = 1, len do
-        if cols[i].other.name == 'andonov' then
+        if cols[i].other.name ~= 'player' then
+        e.dir = e.dir * -1
         end
     end
 end
@@ -174,7 +175,7 @@ end
 
 -- Teleports player to another map.
 function teleportPlayer(po, p, pos)
-    po:setPos(pos.x, pos.y)
+    po.xPos, po.yPos = pos.x, pos.y
     local oX, oY = po.xPos, po.yPos
     p.x, p.y = oX, oY
     world:remove(p)
@@ -209,6 +210,7 @@ local health_pt = love.graphics.newQuad(112, 208, 16, 16, spr_list:getWidth(), s
 local enemies = {}
 local coord = {}
 coord.x, coord.y = 200, 200
+math.randomseed(os.clock() * 100000000000)
 for i = 1, 100 do
     enemies[i] = enemy:new()
     enemies[i]:setPos(coord.x, coord.y)
@@ -248,13 +250,17 @@ layer0.potions = {}
 
 -- Create enemy sprites.
 local tmp = {}
+local dir = 1;
 for i = 1, 100 do
+    if i % 2 == 0 or i % 5 == 0 then
+        dir = dir * -1
+    end
     tmp = {
         sprite = enemies[i].sprite,
         x = enemies[i].xPos,
         y = enemies[i].yPos,
         collidable = true,
-        dir = -1,
+        dir = dir,
         name = 'enemy',
         ob = enemies[i]
     }
@@ -267,6 +273,10 @@ coord.x, coord.y = 300, 300
 for i = 1, 100 do
     hpotions[i] = hp:new()
     hpotions[i]:setPos(coord.x, coord.y)
+    math.randomseed(os.clock() * 100000000000)
+    for i = 1, 3 do
+        math.random(10000, 65000)
+    end
     if math.random(10) % 2 == 0 or math.random(10) % 5 == 0 then
         hpotions[i]:damage()
     end
@@ -356,6 +366,10 @@ layer.update = function(self, dt)
         if value.name == 'enemy' then
             local enemy = value
             if enemy.ob.alive == true then
+                math.randomseed(os.clock() * 100000000000)
+                for i = 1, 3 do
+                    math.random()
+                end
                 moveEnemy(enemy.ob, self.sprites.player.ob, enemy, self.sprites.player, dt)
             end
         end

@@ -21,18 +21,18 @@ function love.draw()
         love.graphics.print(map:drawHealth(), 980, 710)
 
         -- Scale world.
-        local scale = 3
+        local scale = 1
         local screen_width = love.graphics.getWidth() / scale
         local screen_height = love.graphics.getHeight() / scale
         local sw, sh = 250, 200
 
         -- Translate world so that player is always centred
         local player = map.layers["Sprites"].sprites.player
-        local tx = math.floor(player.x - sw / 2)
-        local ty = math.floor(player.y - sh / 2)
+        local tx = math.floor(player.x - screen_width / 2)
+        local ty = math.floor(player.y - screen_height / 2)
 
         -- As basic as fog of war can get. Thank god I wasted 10 hours on more unoptimal solutions.
-        map:resize(250, 200)
+        --map:resize(250, 200)
         map:draw(-tx, -ty, scale, scale)
 
         -- Reset colour.

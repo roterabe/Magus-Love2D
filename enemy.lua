@@ -4,7 +4,6 @@ Enemy = {
     yPos = 0,
     width = 16,
     height = 16,
-    dir = 1,
     damage = 1,
     health = 100,
     alive = true
@@ -25,11 +24,10 @@ function Enemy:attack(po)
 end
 
 -- Prerequisites for movement.
---local direction = -1
+-- local direction = -1
 local initialtime = love.timer.getTime()
 local smart = false
 local smartTimes = 0
-
 
 -- Default enemy movement.
 function Enemy:walk(goalX, goalY, dir, dt)
@@ -38,10 +36,16 @@ function Enemy:walk(goalX, goalY, dir, dt)
 
     timer = love.timer.getTime() - initialtime
     if timer > stoptimer then
-        smartTimes = math.random(1, 9)
+        smartTimes = math.random(1, 1000323)
         initialtime = love.timer.getTime()
-        dir = smartTimes % 3 == 0 and dir * -1 or dir * 1
-        smart = smart == false and true or false
+        if smartTimes % 3 == 0 then
+            dir = dir * -1
+        else
+            dir = dir * 1
+        end
+        --dir = smartTimes % 3 == 0 and dir * -1 or dir * 1
+            smart = smart == false and true or false
+
 
     end
 
@@ -71,7 +75,7 @@ end
 -- Set enemy sprite.
 function Enemy:setSprite(path)
     self.sprite = path
-    --self.sprite = love.graphics.newImage(path)
+    -- self.sprite = love.graphics.newImage(path)
 end
 
 -- Calculate distance between two points.
