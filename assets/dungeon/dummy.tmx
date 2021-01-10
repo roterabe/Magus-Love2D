@@ -181,6 +181,10 @@
   <properties>
    <property name="collidable" type="bool" value="false"/>
   </properties>
-  <object id="1" name="Player0" x="760.727" y="35.0909"/>
+  <object id="1" name="Player0" x="760.727" y="35.0909">
+   <properties>
+    <property name="collidable" type="bool" value="false"/>
+   </properties>
+  </object>
  </objectgroup>
 </map>

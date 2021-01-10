@@ -1,4 +1,4 @@
---TODO Make game cool.
+-- TODO Make game cool.
 local map = require 'map'
 
 -- Load various things in love and the game itself.
@@ -15,31 +15,44 @@ function love.update(dt)
 end
 
 function love.draw()
+    if map:getAliveStatus() == true then
+        love.graphics.print('AD: ~30 DPS', 840, 710)
+        love.graphics.print('Health:', 920, 710)
+        love.graphics.print(map:drawHealth(), 980, 710)
 
-    love.graphics.print('AD: ~30 DPS', 840, 710)
-    love.graphics.print('Health:', 920, 710)
-    love.graphics.print(map:drawHealth(), 980, 710)
+        -- Scale world.
+        local scale = 3
+        local screen_width = love.graphics.getWidth() / scale
+        local screen_height = love.graphics.getHeight() / scale
+        local sw, sh = 250, 200
 
-    -- Scale world.
-    local scale = 3
-    local screen_width = love.graphics.getWidth() / scale
-    local screen_height = love.graphics.getHeight() / scale
-    local sw, sh = 250, 200
+        -- Translate world so that player is always centred
+        local player = map.layers["Sprites"].sprites.player
+        local tx = math.floor(player.x - sw / 2)
+        local ty = math.floor(player.y - sh / 2)
 
-    -- Translate world so that player is always centred
-    local player = map.layers["Sprites"].sprites.player
-    local tx = math.floor(player.x - sw / 2)
-    local ty = math.floor(player.y - sh / 2)
+        -- As basic as fog of war can get. Thank god I wasted 10 hours on more unoptimal solutions.
+        map:resize(250, 200)
+        map:draw(-tx, -ty, scale, scale)
 
-    -- As basic as fog of war can get. Thank god I wasted 10 hours on more unoptimal solutions.
-    map:resize(250, 200)
-    map:draw(-tx, -ty, scale, scale)
-
+        -- Reset colour.
+        love.graphics.setColor(255, 255, 255, 255)
+    else
+        if love.keyboard.isDown('r') then
+            love.event.quit('restart')
+        elseif love.keyboard.isDown('q') then
+            love.event.quit()
+        end
+        local myFont = love.graphics.newFont(45)
+        love.graphics.setFont(myFont)
+        love.graphics.setColor(255, 255, 255, 255)
+        love.graphics.setBackgroundColor(0, 0, 0)
+        love.graphics.print('AND HE LIVED HAPPILY NEVER AFTER', 220, 320)
+        love.graphics.print('press "r" to try again, if you dare', 260, 380)
+        love.graphics.print('press "q" to quit and cry about it', 265, 440)
+    end
     -- Collision map.
     -- map:bump_draw(world)
     -- drawDebug()
-
-    -- Reset colour.
-    love.graphics.setColor(255, 255, 255, 255)
 
 end

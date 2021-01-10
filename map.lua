@@ -2,30 +2,36 @@ local sti = require 'sti'
 local bump = require 'bump.bump'
 local bump_debug = require 'bump.bump_debug'
 local enemy = require 'enemy'
-local gamera = require 'gamera-master.gamera'
 local character = require 'player'
+local hp = require 'health_potion'
 
 local cellsize = 16
-local map_path = 'assets/dungeon/level.lua'
-local level = 'level'
+local map_path = 'assets/dungeon/beta_version.lua'
+
 -- local timer = 5
 -- local initialtime = love.timer.getTime()
 
 local map = sti(map_path, {'bump'}, 0, 0)
-local map0 = sti('assets/dungeon/dummy.lua', {'bump'}, 1500, 1500)
 
 -- Create physics world.
 local world = bump.newWorld(cellsize)
 
+-- Create potions layer.
+local layer0 = map:addCustomLayer('Potions', 2)
+
 -- Create layer for characters.
-local layer = map:addCustomLayer("Sprites", 5)
+local layer = map:addCustomLayer('Sprites', 6)
 
 -- Position main character on spawn point.
-local spawn
+local spawn = {}
 for k, object in pairs(map.objects) do
-    if object.name == "Player" then
-        spawn = object
-        break
+    if object.name == 'Player' then
+        spawn.a = object
+
+    elseif object.name == 'Player0' then
+        spawn.b = object
+    elseif object.name == 'return' then
+        spawn.returning = object
     end
 end
 
@@ -36,15 +42,8 @@ end
 
 -- Filter how to collide with various objects.
 local playerFilter = function(item, other)
-    if other.name == 'andonov' then
-        map.layers['andonov'].opacity = 1
-        return 'cross'
-    elseif other.name == 'Black' then
-        -- map:swapTile(map.tileInstances[gid], map.tiles[1])
-        return 'cross'
-    elseif other.name == 'ladder' then
-        level = 'dummy'
-        map_path = 'assets/dungeon/dummy.lua'
+    if other.name == 'health_potion' then
+
         return 'cross'
     else
         return 'slide'
@@ -87,10 +86,15 @@ function movePlayer(direction, po, p, dt)
 
     -- deal with the collisions.
     for i = 1, len do
-        if cols[i].other.name == 'andonov' then
-            print('collided with ' .. tostring(cols[i].other.name))
+        if cols[i].other.name == 'ladder0' then
+            teleportPlayer(po, p, spawn.returning)
 
-        elseif cols[i].other.name == 'Stairs' then
+        elseif cols[i].other.name == 'ladder' then
+            teleportPlayer(po, p, spawn.b)
+        elseif cols[i].other.name == 'health_potion' then
+            local potion = cols[i].other.ob
+            po:heal(potion:take(po.health))
+            world:remove(cols[i].other)
 
         else
             print('collided with ' .. tostring(cols[i].other))
@@ -118,7 +122,8 @@ function moveEnemy(eo, po, e, p, dt)
     -- If close enough to player, simply attack.
     if dist(e.x, e.y, p.x, p.y) < 10 then
         if po.health <= 0 then
-            po.health = 210
+            po:die()
+            po:revive()
             local oX, oY = po:resetPos()
             p.x, p.y = oX, oY
             world:remove(p)
@@ -142,10 +147,7 @@ function moveEnemy(eo, po, e, p, dt)
 
     for i = 1, len do
         if cols[i].other.name == 'andonov' then
-            -- print('collided with ' .. tostring(cols[i].other.name))
-
         end
-        -- print('collided with ' .. tostring(cols[i].other))
     end
 end
 
@@ -170,20 +172,26 @@ function enemySelector(po, p, dt)
     end
 end
 
+-- Teleports player to another map.
+function teleportPlayer(po, p, pos)
+    po:setPos(pos.x, pos.y)
+    local oX, oY = po.xPos, po.yPos
+    p.x, p.y = oX, oY
+    world:remove(p)
+    -- world:add(p, p.x, p.y, p.sprite:getWidth() / 100, p.sprite:getHeight() / 50)
+    world:add(p, p.x, p.y, 16 / 10, 16 / 50)
+end
+
+-- Helper functions for main.
+------------------------------------------------------------------
 function map:drawHealth()
     return layer.sprites.player.ob.health
 end
 
--- Generate enemies.
-local enemies = {}
-local coord = {}
-local reverse = 1
-coord.x, coord.y = 200, 200
-for i = 1, 100 do
-    enemies[i] = enemy:new()
-    enemies[i]:setPos(coord.x, coord.y)
-    coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+function map:getAliveStatus()
+    return layer.sprites.player.ob.alive
 end
+------------------------------------------------------------------
 
 -- Load all sprites.
 local spr_list = love.graphics.newImage('assets/dungeon/0x72_16x16DungeonTileset.v4.png')
@@ -194,6 +202,19 @@ local char_spr = love.graphics.newQuad(80, 144, 16, 16, spr_list:getWidth(), spr
 -- Load specific enemy sprite.
 local en_spr = love.graphics.newQuad(80, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
 
+-- Load health potion sprite
+local health_pt = love.graphics.newQuad(112, 208, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Generate enemies.
+local enemies = {}
+local coord = {}
+coord.x, coord.y = 200, 200
+for i = 1, 100 do
+    enemies[i] = enemy:new()
+    enemies[i]:setPos(coord.x, coord.y)
+    coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+end
+
 -- Set sprite for enemy characters.
 for i = 1, 100 do
     enemies[i]:setSprite(en_spr)
@@ -201,7 +222,7 @@ end
 
 -- Create player obj.
 local player = character:new()
-player:setPos(spawn.x, spawn.y)
+player:setPos(spawn.a.x, spawn.a.y)
 
 -- player:setSprite('assets/sprite.png')
 
@@ -222,6 +243,9 @@ layer.sprites = {
     }
 }
 
+-- Layer for setting all potions.
+layer0.potions = {}
+
 -- Create enemy sprites.
 local tmp = {}
 for i = 1, 100 do
@@ -237,15 +261,46 @@ for i = 1, 100 do
     table.insert(layer.sprites, tmp)
 end
 
+local hpotions = {}
+local fate
+coord.x, coord.y = 300, 300
+for i = 1, 100 do
+    hpotions[i] = hp:new()
+    hpotions[i]:setPos(coord.x, coord.y)
+    if math.random(10) % 2 == 0 or math.random(10) % 5 == 0 then
+        hpotions[i]:damage()
+    end
+    coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+
+end
+
+for i = 1, 100 do
+    tmp = {
+        name = 'health_potion',
+        sprite = health_pt,
+        x = hpotions[i].x,
+        y = hpotions[i].y,
+        ob = hpotions[i]
+    }
+    table.insert(layer0.potions, tmp)
+end
+
 map:bump_init(world)
 
 -- Add character to collision world.
 world:add(layer.sprites.player, layer.sprites.player.x, layer.sprites.player.y, 16 / 10, 16 / 50)
 
--- -- Add enemies to collision world.
+-- Add enemies to collision world.
 for key, value in pairs(layer.sprites) do
     if value.name == 'enemy' then
         world:add(value, value.x, value.y, 16 / 10, 16 / 50)
+    end
+end
+
+-- Add potions to collision world.
+for key, value in pairs(layer0.potions) do
+    if value.name == 'health_potion' then
+        world:add(value, value.x, value.y, 16, 16)
     end
 end
 
@@ -254,9 +309,12 @@ map:removeLayer("Spawn Point")
 
 -- Draw player and the rest of the characters on layer Sprite.
 layer.draw = function(self)
+
+    -- Draw player sprite on layer.
     love.graphics.draw(spr_list, self.sprites.player.sprite, math.floor(self.sprites.player.x),
         math.floor(self.sprites.player.y), 0, self.sprites.player.ob.dir, 1, 16 / 2, 16 / 1.1)
 
+    -- Draw enemy sprites on layer.
     for i = 1, 100 do
         for key, value in pairs(self.sprites) do
             if value.name == 'enemy' and value.ob.alive == true then
@@ -274,6 +332,21 @@ layer.draw = function(self)
 
 end
 
+layer0.draw = function(self)
+    -- Draw health potion sprites.
+    for i = 1, 100 do
+        for key, value in pairs(self.potions) do
+            if value.name == 'health_potion' and value.ob.taken == false then
+                love.graphics.draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2,
+                    16 / 2)
+            end
+        end
+    end
+end
+
+layer0.update = function(self, dt)
+end
+
 layer.update = function(self, dt)
     -- 50 pixels per second
     local speed = 50
@@ -289,27 +362,27 @@ layer.update = function(self, dt)
     end
 
     -- Move player up.
-    if love.keyboard.isDown('w') or love.keyboard.isDown("up") then
+    if love.keyboard.isDown('w') or love.keyboard.isDown('up') then
         self.sprites.player.y = self.sprites.player.y - speed * dt
         movePlayer('up', self.sprites.player.ob, self.sprites.player, dt)
 
     end
 
     -- Move player down.
-    if love.keyboard.isDown('s') or love.keyboard.isDown("down") then
+    if love.keyboard.isDown('s') or love.keyboard.isDown('down') then
         self.sprites.player.y = self.sprites.player.y + speed * dt
         movePlayer('down', self.sprites.player.ob, self.sprites.player, dt)
     end
 
     -- Move player left.
-    if love.keyboard.isDown('a') or love.keyboard.isDown("left") then
+    if love.keyboard.isDown('a') or love.keyboard.isDown('left') then
         self.sprites.player.x = self.sprites.player.x - speed * dt
         movePlayer('left', self.sprites.player.ob, self.sprites.player, dt)
         self.sprites.player.ob:flip(1)
     end
 
     -- Move player right.
-    if love.keyboard.isDown('d') or love.keyboard.isDown("right") then
+    if love.keyboard.isDown('d') or love.keyboard.isDown('right') then
         self.sprites.player.x = self.sprites.player.x + speed * dt
         movePlayer('right', self.sprites.player.ob, self.sprites.player, dt)
         self.sprites.player.ob:flip(-1)

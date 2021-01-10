@@ -2,11 +2,14 @@
 Player = {
     xPos = 0,
     yPos = 0,
+    mapPosX = 0,
+    mapPosY = 0,
     width = 16,
     height = 16,
     damage = 1,
     health = 420,
     dir = 1,
+    lives = 5,
     alive = true
 }
 
@@ -77,6 +80,21 @@ end
 
 function Player:flip(direction)
     self.dir = direction
+end
+
+function Player:die()
+    self.lives = self.lives - 1
+    if self.lives <= 0 then
+        self.alive = false
+    end
+end
+
+function Player:revive()
+    self.health = 421
+end
+
+function Player:heal(health)
+    self.health = health
 end
 
 return Player

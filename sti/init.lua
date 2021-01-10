@@ -836,7 +836,10 @@ end
 function Map:draw(tx, ty, sx, sy)
     local current_canvas = lg.getCanvas()
     lg.setCanvas(self.canvas)
-    lg.clear()
+
+    -- Set alpha to 0 so as to not clear maps loaded with offset on screen. 
+	local a = 0
+	lg.clear(0, 0, 0, a, self.canvas)
 
     -- Scale map to 1.0 to draw onto canvas, this fixes tearing issues
     -- Map is translated to correct position so the right section is drawn
