@@ -22,15 +22,17 @@ local layer0 = map:addCustomLayer('Potions', 2)
 
 -- Create layer for characters.
 local layer = map:addCustomLayer('Sprites', 6)
+-- local layer1 = map:addCustomLayer('ESprites',)
 
 -- Position main character on spawn point.
 local spawn = {}
 for k, object in pairs(map.objects) do
     if object.name == 'Player' then
         spawn.a = object
-
     elseif object.name == 'Player0' then
         spawn.b = object
+    elseif object.name == 'Player1' then
+        spawn.c = object
     elseif object.name == 'return' then
         spawn.returning = object
     end
@@ -94,20 +96,36 @@ function movePlayer(direction, po, p, dt)
     end
 
     for i = 1, len do
-        if cols[i].other.name == 'ladder0' then
-            teleportPlayer(po, p, spawn.returning)
-
-        elseif cols[i].other.name == 'ladder' then
+        -- Teleport for first dungeon.
+        --------------------------------------------
+        if cols[i].other.name == 'ladder' then
             teleportPlayer(po, p, spawn.b)
+        elseif cols[i].other.name == 'ladder0' then
+            teleportPlayer(po, p, spawn.returning)
+            --------------------------------------------
+            -- Teleport to second dungeon.
+            --------------------------------------------
+        elseif cols[i].other.name == 'ladder2' then
+            -- To be fixed to different return spot.
+            teleportPlayer(po, p, spawn.c)
+        elseif cols[i].other.name == 'ladder1' then
+            teleportPlayer(po, p, spawn.returning)
+            --------------------------------------------
+            -- Handle drinking health potion.
+            --------------------------------------------
         elseif cols[i].other.name == 'health_potion' then
             local potion = cols[i].other.ob
             po:heal(potion:take(po))
             world:remove(cols[i].other)
+            --------------------------------------------
+            -- Handle drinking potion of swiftness.
+            --------------------------------------------
         elseif cols[i].other.name == 'potion_of_swiftness' then
             local potion = cols[i].other.ob
             po:changeSpeed(potion:take())
             world:remove(cols[i].other)
             initialtime = love.timer.getTime()
+            --------------------------------------------
         else
             print('collided with ' .. tostring(cols[i].other))
         end
@@ -250,7 +268,11 @@ math.randomseed(os.clock() * 100000000000)
 for i = 1, 100 do
     enemies[i] = enemy:new()
     enemies[i]:setPos(coord.x, coord.y)
-    coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+    if i < 80 then
+        coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+    else
+        coord.x, coord.y = math.random(2545, 3100), math.random(60, 746)
+    end
 end
 enemies[101] = enemy:new()
 enemies[101]:setPos(spawn.returning.x, spawn.returning.y)
@@ -328,7 +350,11 @@ for i = 1, 100 do
     if math.random(10) % 5 == 0 then
         hpotions[i]:damage()
     end
-    coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+    if i < 60 then
+        coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+    else
+        coord.x, coord.y = math.random(2545, 3100), math.random(60, 746)
+    end
 
 end
 
