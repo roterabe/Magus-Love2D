@@ -1,4 +1,4 @@
-local health_potion = {
+health_potion = {
     x = 0,
     y = 0,
     hp = 50,
@@ -17,15 +17,14 @@ function health_potion:setPos(xPos, yPos)
     self.x, self.y = xPos, yPos
 end
 
-function health_potion:take(curr)
+function health_potion:take(po)
     self.taken = true
-    curr = curr + self.hp
-    self.hp = 0
-    return curr
+    po.health = po.health + self.hp
+    return po.health
 end
 
 function health_potion:damage()
-    self.hp = self.hp * -1
+    self.hp = self.hp * -2
 end
 
 return health_potion
