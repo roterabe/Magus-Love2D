@@ -2,14 +2,15 @@
 Player = {
     xPos = 0,
     yPos = 0,
-    mapPosX = 0,
-    mapPosY = 0,
+    originX = 0,
+    originY = 0,
     width = 16,
     height = 16,
     damage = 1,
     health = 420,
+    speed = 50,
     dir = 1,
-    lives = 5,
+    lives = 2,
     alive = true
 }
 
@@ -35,21 +36,28 @@ function Player:setPos(xPos, yPos)
     self.originY = yPos
 end
 
--- Flip sprite.
-function Player:flip(flip)
-    self.flip = flip
+-- Reset player position in case of death for instance.
+function Player:resetPos()
+    self.xPos, self.yPos = self.originX, self.originY
+    return self.originX, self.originY
+end
+
+-- Self explanatory.
+function Player:updateSpritePos(p)
+    p.x, p.y = self.xPos, self.yPos
+    return p
 end
 
 -- Set player sprite.
-function Player:setSprite(path)
-    self.sprite = path
+function Player:setSprite(quad)
+    self.sprite = quad
     -- self.sprite = love.graphics.newImage(path)
 end
 
 -- Move player
 function Player:move(direction, p, dt)
     local goalX, goalY
-    local speed = 50
+    local speed = self.speed
 
     if direction == 'up' then
         goalX, goalY = p.x, p.y - speed * dt
@@ -64,13 +72,8 @@ function Player:move(direction, p, dt)
         goalX, goalY = p.x + speed * dt, p.y
     end
 
+    self.xPos, self.yPos = goalX, goalY
     return goalX, goalY
-end
-
--- Reset player position in case of death for instance.
-function Player:resetPos()
-    self.xPos, self.yPos = self.originX, self.originY
-    return self.originX, self.originY
 end
 
 -- Calculate distance between two points.
@@ -78,10 +81,12 @@ function dist(x1, y1, x2, y2)
     return ((x2 - x1) ^ 2 + (y2 - y1) ^ 2) ^ 0.5
 end
 
+-- Flip player spite left or right.
 function Player:flip(direction)
     self.dir = direction
 end
 
+-- Mark player as dead.
 function Player:die()
     self.lives = self.lives - 1
     if self.lives <= 0 then
@@ -89,12 +94,18 @@ function Player:die()
     end
 end
 
+-- Restore player health after death.
 function Player:revive()
     self.health = 421
 end
 
+-- Update player's current health after changes.
 function Player:heal(health)
     self.health = health
+end
+
+function Player:changeSpeed(speed)
+    self.speed = speed
 end
 
 return Player

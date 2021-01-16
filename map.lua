@@ -4,6 +4,7 @@ local bump_debug = require 'bump.bump_debug'
 local enemy = require 'enemy'
 local character = require 'player'
 local hp = require 'health_potion'
+local sw = require 'potion_swiftness'
 
 local cellsize = 16
 local map_path = 'assets/dungeon/beta_version.lua'
@@ -43,7 +44,8 @@ end
 -- Filter how to collide with various objects.
 local playerFilter = function(item, other)
     if other.name == 'health_potion' then
-
+        return 'cross'
+    elseif other.name == 'potion_of_swiftness' then
         return 'cross'
     else
         return 'slide'
@@ -57,6 +59,8 @@ function dist(x1, y1, x2, y2)
 end
 
 -- Implement player movement.
+local initialtime = love.timer.getTime()
+local timer = 2
 function movePlayer(direction, po, p, dt)
     local goalX, goalY = po:move(direction, p, dt)
 
@@ -85,6 +89,10 @@ function movePlayer(direction, po, p, dt)
     end ]]
 
     -- deal with the collisions.
+    if love.timer.getTime() - initialtime > timer then
+        po:changeSpeed(50)
+    end
+
     for i = 1, len do
         if cols[i].other.name == 'ladder0' then
             teleportPlayer(po, p, spawn.returning)
@@ -93,9 +101,13 @@ function movePlayer(direction, po, p, dt)
             teleportPlayer(po, p, spawn.b)
         elseif cols[i].other.name == 'health_potion' then
             local potion = cols[i].other.ob
-            po:heal(potion:take(po.health))
+            po:heal(potion:take(po))
             world:remove(cols[i].other)
-
+        elseif cols[i].other.name == 'potion_of_swiftness' then
+            local potion = cols[i].other.ob
+            po:changeSpeed(potion:take())
+            world:remove(cols[i].other)
+            initialtime = love.timer.getTime()
         else
             print('collided with ' .. tostring(cols[i].other))
         end
@@ -120,18 +132,36 @@ function moveEnemy(eo, po, e, p, dt)
     end
 
     -- If close enough to player, simply attack.
-    if dist(e.x, e.y, p.x, p.y) < 10 then
-        if po.health <= 0 then
-            po:die()
-            po:revive()
-            local oX, oY = po:resetPos()
-            p.x, p.y = oX, oY
-            world:remove(p)
-            -- world:add(p, p.x, p.y, p.sprite:getWidth() / 100, p.sprite:getHeight() / 50)
-            world:add(p, p.x, p.y, 16 / 10, 16 / 50)
+    if e.name == 'enemy' then
+        if dist(e.x, e.y, p.x, p.y) < 10 then
+            if po.health <= 0 then
+                po:die()
+                po:revive()
+                local oX, oY = po:resetPos()
+                p = po:updateSpritePos(p)
+                -- p.x, p.y = oX, oY
+                world:remove(p)
+                -- world:add(p, p.x, p.y, p.sprite:getWidth() / 100, p.sprite:getHeight() / 50)
+                world:add(p, p.x, p.y, 16 / 10, 16 / 50)
+            end
+            po.health = eo:attack(po)
+            print('Miss me with that gay shit.')
         end
-        po.health = eo:attack(po)
-        print('Miss me with that gay shit.')
+    elseif e.name == 'enemy_troll' then
+        if dist(e.x + 16, e.y + 16, p.x, p.y) < 30 then
+            if po.health <= 0 then
+                po:die()
+                po:revive()
+                local oX, oY = po:resetPos()
+                p = po:updateSpritePos(p)
+                -- p.x, p.y = oX, oY
+                world:remove(p)
+                -- world:add(p, p.x, p.y, p.sprite:getWidth() / 100, p.sprite:getHeight() / 50)
+                world:add(p, p.x, p.y, 16 / 10, 16 / 50)
+            end
+            po.health = eo:attack(po)
+            print('Miss me with that troll shit.')
+        end
     end
     local actualX, actualY, cols, len = world:move(e, goalX, goalY, playerFilter)
 
@@ -147,7 +177,7 @@ function moveEnemy(eo, po, e, p, dt)
 
     for i = 1, len do
         if cols[i].other.name ~= 'player' then
-        e.dir = e.dir * -1
+            e.dir = e.dir * -1
         end
     end
 end
@@ -206,6 +236,12 @@ local en_spr = love.graphics.newQuad(80, 176, 16, 16, spr_list:getWidth(), spr_l
 -- Load health potion sprite
 local health_pt = love.graphics.newQuad(112, 208, 16, 16, spr_list:getWidth(), spr_list:getHeight())
 
+-- Load potion of swiftness sprite.
+local pt_swift = love.graphics.newQuad(144, 208, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load enemy troll sprite.
+local troll_spr = love.graphics.newQuad(96, 176, 32, 32, spr_list:getWidth(), spr_list:getHeight())
+
 -- Generate enemies.
 local enemies = {}
 local coord = {}
@@ -216,6 +252,10 @@ for i = 1, 100 do
     enemies[i]:setPos(coord.x, coord.y)
     coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
 end
+enemies[101] = enemy:new()
+enemies[101]:setPos(spawn.returning.x, spawn.returning.y)
+enemies[101]:setSprite(troll_spr)
+enemies[101]:changeDamage(10)
 
 -- Set sprite for enemy characters.
 for i = 1, 100 do
@@ -225,8 +265,6 @@ end
 -- Create player obj.
 local player = character:new()
 player:setPos(spawn.a.x, spawn.a.y)
-
--- player:setSprite('assets/sprite.png')
 
 -- Set player sprite.
 player:setSprite(char_spr)
@@ -242,6 +280,15 @@ layer.sprites = {
         collidable = true,
         name = 'player',
         ob = player
+    },
+    tr = {
+        sprite = enemies[101].sprite,
+        x = enemies[101].xPos,
+        y = enemies[101].yPos,
+        collidable = true,
+        dir = 1,
+        name = 'enemy_troll',
+        ob = enemies[101]
     }
 }
 
@@ -267,23 +314,35 @@ for i = 1, 100 do
     table.insert(layer.sprites, tmp)
 end
 
+-- Generate health potion objects.
 local hpotions = {}
 local fate
 coord.x, coord.y = 300, 300
+math.randomseed(os.clock() * 100000000000)
 for i = 1, 100 do
     hpotions[i] = hp:new()
     hpotions[i]:setPos(coord.x, coord.y)
-    math.randomseed(os.clock() * 100000000000)
-    for i = 1, 3 do
+    --[[ for i = 1, 3 do
         math.random(10000, 65000)
-    end
-    if math.random(10) % 2 == 0 or math.random(10) % 5 == 0 then
+    end ]]
+    if math.random(10) % 5 == 0 then
         hpotions[i]:damage()
     end
     coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
 
 end
 
+-- Generate potions of swiftness.
+local swpotions = {}
+coord.x, coord.y = 280, 280
+math.randomseed(os.clock() * 100000000000)
+for i = 1, 50 do
+    swpotions[i] = sw:new()
+    swpotions[i]:setPos(coord.x, coord.y)
+    coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+end
+
+-- Set health potion sprites on map.
 for i = 1, 100 do
     tmp = {
         name = 'health_potion',
@@ -291,6 +350,17 @@ for i = 1, 100 do
         x = hpotions[i].x,
         y = hpotions[i].y,
         ob = hpotions[i]
+    }
+    table.insert(layer0.potions, tmp)
+end
+
+for i = 1, 50 do
+    tmp = {
+        name = 'potion_of_swiftness',
+        sprite = pt_swift,
+        x = swpotions[i].x,
+        y = swpotions[i].y,
+        ob = swpotions[i]
     }
     table.insert(layer0.potions, tmp)
 end
@@ -304,12 +374,16 @@ world:add(layer.sprites.player, layer.sprites.player.x, layer.sprites.player.y, 
 for key, value in pairs(layer.sprites) do
     if value.name == 'enemy' then
         world:add(value, value.x, value.y, 16 / 10, 16 / 50)
+    elseif value.name == 'enemy_troll' then
+        world:add(value, value.x, value.y, 10, 20)
     end
 end
 
 -- Add potions to collision world.
 for key, value in pairs(layer0.potions) do
     if value.name == 'health_potion' then
+        world:add(value, value.x, value.y, 16, 16)
+    elseif value.name == 'potion_of_swiftness' then
         world:add(value, value.x, value.y, 16, 16)
     end
 end
@@ -325,28 +399,35 @@ layer.draw = function(self)
         math.floor(self.sprites.player.y), 0, self.sprites.player.ob.dir, 1, 16 / 2, 16 / 1.1)
 
     -- Draw enemy sprites on layer.
-    for i = 1, 100 do
+    for i = 1, 102 do
         for key, value in pairs(self.sprites) do
             if value.name == 'enemy' and value.ob.alive == true then
                 local enemy = value
                 love.graphics.draw(spr_list, enemy.sprite, math.floor(enemy.x), math.floor(enemy.y), 0, enemy.ob.dir, 1,
                     16 / 2, 16 / 1.1)
+            elseif value.name == 'enemy_troll' and value.ob.alive == true then
+                local enemy = value
+                love.graphics.draw(spr_list, enemy.sprite, math.floor(enemy.x), math.floor(enemy.y), 0, enemy.ob.dir, 1,
+                    32 / 2, 32 / 2)
             end
         end
     end
 
     -- Temporarily draw a point at our location so we know
     -- that our sprite is offset properly.
-    -- love.graphics.setPointSize(4)
-    -- love.graphics.points(math.floor(self.sprites.player.x), math.floor(self.sprites.player.y))
+    -- love.graphics.setPointSize(10)
+    -- love.graphics.points(math.floor(self.sprites.tr.x), math.floor(self.sprites.tr.y))
 
 end
 
 layer0.draw = function(self)
     -- Draw health potion sprites.
-    for i = 1, 100 do
+    for i = 1, 150 do
         for key, value in pairs(self.potions) do
             if value.name == 'health_potion' and value.ob.taken == false then
+                love.graphics.draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2,
+                    16 / 2)
+            elseif value.name == 'potion_of_swiftness' and value.ob.taken == false then
                 love.graphics.draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2,
                     16 / 2)
             end
@@ -359,17 +440,19 @@ end
 
 layer.update = function(self, dt)
     -- 50 pixels per second
-    local speed = 50
+    local speed = self.sprites.player.ob.speed
 
     -- Implement enemy smart movement.
     for key, value in pairs(self.sprites) do
         if value.name == 'enemy' then
             local enemy = value
             if enemy.ob.alive == true then
-                math.randomseed(os.clock() * 100000000000)
-                for i = 1, 3 do
-                    math.random()
-                end
+                moveEnemy(enemy.ob, self.sprites.player.ob, enemy, self.sprites.player, dt)
+            end
+        end
+        if value.name == 'enemy_troll' then
+            local enemy = value
+            if enemy.ob.alive == true then
                 moveEnemy(enemy.ob, self.sprites.player.ob, enemy, self.sprites.player, dt)
             end
         end

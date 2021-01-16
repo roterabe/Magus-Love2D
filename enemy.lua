@@ -2,6 +2,8 @@
 Enemy = {
     xPos = 0,
     yPos = 0,
+    originX = 0,
+    originY = 0,
     width = 16,
     height = 16,
     damage = 1,
@@ -26,30 +28,28 @@ end
 -- Prerequisites for movement.
 -- local direction = -1
 local initialtime = love.timer.getTime()
-local smart = false
-local smartTimes = 0
+local axisY = false
+local direction = 0
 
 -- Default enemy movement.
 function Enemy:walk(goalX, goalY, dir, dt)
     local stoptimer = 5 -- 5 seconds
     local speed = 50
 
-    timer = love.timer.getTime() - initialtime
+    local timer = love.timer.getTime() - initialtime
     if timer > stoptimer then
-        smartTimes = math.random(1, 1000323)
+        direction = math.random(1, 1000323)
         initialtime = love.timer.getTime()
-        if smartTimes % 3 == 0 then
+        if direction % 3 == 0 then
             dir = dir * -1
         else
             dir = dir * 1
         end
-        --dir = smartTimes % 3 == 0 and dir * -1 or dir * 1
-            smart = smart == false and true or false
-
-
+        -- dir = smartTimes % 3 == 0 and dir * -1 or dir * 1
+        axisY = axisY == false and true or false
     end
 
-    if smart == true then
+    if axisY == true then
         goalY = goalY + speed * dt * dir
     else
         goalX = goalX + speed * dt * dir
@@ -73,8 +73,8 @@ function Enemy:flip(direction)
 end
 
 -- Set enemy sprite.
-function Enemy:setSprite(path)
-    self.sprite = path
+function Enemy:setSprite(quad)
+    self.sprite = quad
     -- self.sprite = love.graphics.newImage(path)
 end
 
@@ -94,6 +94,11 @@ function Enemy:chase(actualX, actualY, playerX, playerY, dt)
         actualY = actualY + goalY / distance * speed * dt
     end
     return actualX, actualY
+end
+
+-- Change enemy object damage.
+function Enemy:changeDamage(damage)
+    self.damage = damage
 end
 
 return Enemy
