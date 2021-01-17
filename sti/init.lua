@@ -838,8 +838,13 @@ function Map:draw(tx, ty, sx, sy)
     lg.setCanvas(self.canvas)
 
     -- Set alpha to 0 so as to not clear maps loaded with offset on screen. 
-	local a = 0
-	lg.clear(0, 0, 0, a, self.canvas)
+    -- local a = 0
+    -- lg.clear(0, 0, 0, a, self.canvas)
+
+    ----------------------------------------------------------------------
+    -- Switched to standard clear since we're using one map now.
+    lg.clear()
+    ----------------------------------------------------------------------
 
     -- Scale map to 1.0 to draw onto canvas, this fixes tearing issues
     -- Map is translated to correct position so the right section is drawn
@@ -861,10 +866,19 @@ function Map:draw(tx, ty, sx, sy)
     lg.origin()
     lg.scale(sx or 1, sy or sx or 1)
 
-	lg.setCanvas(current_canvas)
-	
-	-- Modified canvas draw to center new resized image for fog of war.
-    lg.draw(self.canvas, 90, 30)
+    lg.setCanvas(current_canvas)
+
+    -- Modified canvas draw to center new resized image for fog of war.
+    -- lg.draw(self.canvas, 90, 30)
+    ----------------------------------------------------------------------
+    -- Top method gave me head banging stress. 
+    -- Why would the map not load fully? Why do I have stupid borders?
+    -- Maybe cause I'm the idiot who changed it in STI.
+
+    -- NOTICE: Changed top-left start position of canvas in order to resize properly in center.
+    -- The number is magical, don't ask.
+    lg.draw(self.canvas, 60, 25)
+    ----------------------------------------------------------------------
 
     lg.pop()
 end

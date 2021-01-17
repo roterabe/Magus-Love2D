@@ -10,7 +10,8 @@ Player = {
     health = 420,
     speed = 50,
     dir = 1,
-    lives = 2,
+    lives = 1,
+    keys = 0,
     alive = true
 }
 
@@ -115,6 +116,10 @@ end
 
 function Player:changeSpeed(speed)
     self.speed = speed
+end
+
+function Player:takeKey(key)
+    self.keys = self.keys + key
 end
 
 return Player

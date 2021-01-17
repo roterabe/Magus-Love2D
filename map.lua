@@ -5,22 +5,30 @@ local enemy = require 'enemy'
 local character = require 'player'
 local hp = require 'health_potion'
 local sw = require 'potion_swiftness'
+local tr = require 'treasure'
 
 local cellsize = 16
 local map_path = 'assets/dungeon/beta_version.lua'
 
+-------------------------------------------------------------------------------
 -- Added sounds.
 swing = love.audio.newSource('assets/sounds/attack/swing.wav', 'stream')
-swing:setVolume(0.4)
+swing:setVolume(0.3)
 swing:setLooping(false)
 
 drink = love.audio.newSource('assets/sounds/potions/bottle.wav', 'stream')
-drink:setVolume(0.9)
+drink:setVolume(0.7)
 drink:setLooping(false)
+
+walking = love.audio.newSource('assets/sounds/walking/walk1.mp3', 'stream')
+walking:setVolume(0.5)
+walking:setLooping(false)
+-------------------------------------------------------------------------------
 
 -- local timer = 5
 -- local initialtime = love.timer.getTime()
 
+-----------------------------------------------------------------------
 local map = sti(map_path, {'bump'}, 0, 0)
 
 -- Create physics world.
@@ -30,11 +38,16 @@ local world = bump.newWorld(cellsize)
 local layer0 = map:addCustomLayer('Potions', 2)
 
 -- Create layer for characters.
-local layer = map:addCustomLayer('Sprites', 6)
--- local layer1 = map:addCustomLayer('ESprites',)
+local layer = map:addCustomLayer('Sprites', 7)
 
--- Position main character on spawn point.
+-- Create layer for trasure keys.
+local layer1 = map:addCustomLayer('Tresr', 3)
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
+-- Position main character on spawn points.
 local spawn = {}
+spawn.key = {}
 for k, object in pairs(map.objects) do
     if object.name == 'Player' then
         spawn.a = object
@@ -42,11 +55,18 @@ for k, object in pairs(map.objects) do
         spawn.b = object
     elseif object.name == 'Player1' then
         spawn.c = object
+    elseif object.name == 'Player3' then
+        spawn.d = object
     elseif object.name == 'return' then
         spawn.returning = object
+        -- Load treasure positionsio.close(
+    elseif object.name == 'key' then
+        spawn.key.a = object
     end
 end
+-----------------------------------------------------------------------
 
+-----------------------------------------------------------------------
 function drawDebug(scale, scale0)
     bump_debug.draw(world, scale, scale0)
     love.graphics.setColor(255, 255, 255)
@@ -120,6 +140,11 @@ function movePlayer(direction, po, p, dt)
         elseif cols[i].other.name == 'ladder1' then
             teleportPlayer(po, p, spawn.returning)
             --------------------------------------------
+        elseif cols[i].other.name == 'ladder3_1' then
+            teleportPlayer(po, p, spawn.d)
+        elseif cols[i].other.name == 'ladder3' then
+            teleportPlayer(po, p, spawn.returning)
+            --------------------------------------------
             -- Handle drinking health potion.
             --------------------------------------------
         elseif cols[i].other.name == 'health_potion' then
@@ -136,6 +161,14 @@ function movePlayer(direction, po, p, dt)
             world:remove(cols[i].other)
             initialtime = love.timer.getTime()
             drink:play()
+            --------------------------------------------
+            -- Handle grabbing keys.
+            --------------------------------------------
+        elseif cols[i].other.name == 'treasure' then
+            local tresasure = cols[i].other.ob
+            world:remove(cols[i].other)
+            po:takeKey(treasure:take())
+            print(po.keys)
             --------------------------------------------
         else
             print('collided with ' .. tostring(cols[i].other))
@@ -241,6 +274,7 @@ function teleportPlayer(po, p, pos)
     -- world:add(p, p.x, p.y, p.sprite:getWidth() / 100, p.sprite:getHeight() / 50)
     world:add(p, p.x, p.y, 16 / 10, 16 / 50)
 end
+-----------------------------------------------------------------------
 
 -- Helper functions for main.
 ------------------------------------------------------------------
@@ -254,6 +288,7 @@ end
 ------------------------------------------------------------------
 
 -- Load all sprites.
+-----------------------------------------------------------------------
 local spr_list = love.graphics.newImage('assets/dungeon/0x72_16x16DungeonTileset.v4.png')
 
 -- Load specific player sprite.
@@ -271,7 +306,47 @@ local pt_swift = love.graphics.newQuad(144, 208, 16, 16, spr_list:getWidth(), sp
 -- Load enemy troll sprite.
 local troll_spr = love.graphics.newQuad(96, 176, 32, 32, spr_list:getWidth(), spr_list:getHeight())
 
+-- Load treasure chest sprite.
+local tresr_spr = love.graphics.newQuad(240, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+-----------------------------------------------------------------------
+
+-- Create player obj.
+-----------------------------------------------------------------------
+local player = character:new()
+player:setPos(spawn.a.x, spawn.a.y)
+
+-- Set player sprite.
+player:setSprite(char_spr)
+-----------------------------------------------------------------------
+
+-- Create layer sprite space to display on map.
+-----------------------------------------------------------------------
+layer.sprites = {
+    player = {
+        sprite = player.sprite,
+        x = player.xPos,
+        y = player.yPos,
+        -- ox = player.sprite:getWidth() / 2,
+        -- oy = player.sprite:getHeight() / 1.35,
+        collidable = true,
+        name = 'player',
+        ob = player
+    }
+}
+-----------------------------------------------------------------------
+
+-- Layer for setting all potions.
+-----------------------------------------------------------------------
+layer0.potions = {}
+-----------------------------------------------------------------------
+
+-- Layer for setting all treasures.
+-----------------------------------------------------------------------
+layer1.treasures = {}
+-----------------------------------------------------------------------
+
 -- Generate enemies.
+-----------------------------------------------------------------------
 local enemies = {}
 local coord = {}
 coord.x, coord.y = 200, 200
@@ -294,41 +369,10 @@ enemies[101]:changeDamage(10)
 for i = 1, 100 do
     enemies[i]:setSprite(en_spr)
 end
-
--- Create player obj.
-local player = character:new()
-player:setPos(spawn.a.x, spawn.a.y)
-
--- Set player sprite.
-player:setSprite(char_spr)
-
--- Create sprite objects to display on map.
-layer.sprites = {
-    player = {
-        sprite = player.sprite,
-        x = player.xPos,
-        y = player.yPos,
-        -- ox = player.sprite:getWidth() / 2,
-        -- oy = player.sprite:getHeight() / 1.35,
-        collidable = true,
-        name = 'player',
-        ob = player
-    },
-    tr = {
-        sprite = enemies[101].sprite,
-        x = enemies[101].xPos,
-        y = enemies[101].yPos,
-        collidable = true,
-        dir = 1,
-        name = 'enemy_troll',
-        ob = enemies[101]
-    }
-}
-
--- Layer for setting all potions.
-layer0.potions = {}
+-----------------------------------------------------------------------
 
 -- Create enemy sprites.
+-----------------------------------------------------------------------
 local tmp = {}
 local dir = 1;
 for i = 1, 100 do
@@ -347,7 +391,19 @@ for i = 1, 100 do
     table.insert(layer.sprites, tmp)
 end
 
+tmp = {
+    sprite = enemies[101].sprite,
+    x = enemies[101].xPos,
+    y = enemies[101].yPos,
+    collidable = true,
+    dir = 1,
+    name = 'enemy_troll',
+    ob = enemies[101]
+}
+-----------------------------------------------------------------------
+
 -- Generate health potion objects.
+-----------------------------------------------------------------------
 local hpotions = {}
 local fate
 coord.x, coord.y = 300, 300
@@ -368,8 +424,10 @@ for i = 1, 100 do
     end
 
 end
+-----------------------------------------------------------------------
 
--- Generate potions of swiftness.
+-- Generate potion of swiftness objects.
+-----------------------------------------------------------------------
 local swpotions = {}
 coord.x, coord.y = 280, 280
 math.randomseed(os.clock() * 100000000000)
@@ -378,8 +436,10 @@ for i = 1, 50 do
     swpotions[i]:setPos(coord.x, coord.y)
     coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
 end
+-----------------------------------------------------------------------
 
--- Set health potion sprites on map.
+-- Set health potion sprites on map layer.
+-----------------------------------------------------------------------
 for i = 1, 100 do
     tmp = {
         name = 'health_potion',
@@ -391,6 +451,7 @@ for i = 1, 100 do
     table.insert(layer0.potions, tmp)
 end
 
+-- Set sprites for potion of swiftness on map layer.
 for i = 1, 50 do
     tmp = {
         name = 'potion_of_swiftness',
@@ -401,7 +462,26 @@ for i = 1, 50 do
     }
     table.insert(layer0.potions, tmp)
 end
+-----------------------------------------------------------------------
 
+-- Generate treasure box objects.
+-----------------------------------------------------------------------
+local treasr = {}
+treasr[1] = tr:new()
+treasr[1]:setPos(spawn.key.a.x, spawn.key.a.y)
+for i = 1, 1 do
+    tmp = {
+        name = 'treasure',
+        sprite = tresr_spr,
+        x = treasr[i].x,
+        y = treasr[i].y,
+        ob = treasr[i]
+    }
+    table.insert(layer1.treasures, tmp)
+end
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
 map:bump_init(world)
 
 -- Add character to collision world.
@@ -425,10 +505,19 @@ for key, value in pairs(layer0.potions) do
     end
 end
 
+-- Add treasures to collision world.
+for key, value in pairs(layer1.treasures) do
+    if value.name == 'treasure' then
+        world:add(value, value.x, value.y, 16, 16)
+    end
+end
+
 -- Remove unneeded object layer.
 map:removeLayer("Spawn Point")
+-----------------------------------------------------------------------
 
 -- Draw player and the rest of the characters on layer Sprite.
+-----------------------------------------------------------------------
 layer.draw = function(self)
 
     -- Draw player sprite on layer.
@@ -472,6 +561,20 @@ layer0.draw = function(self)
     end
 end
 
+layer1.draw = function(self)
+    -- Draw treasure sprites.
+    for i = 1, 1 do
+        for key, value in pairs(self.treasures) do
+            if value.name == 'treasure' and value.ob.key == true then
+                love.graphics.draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2,
+                    16 / 2)
+            end
+        end
+    end
+end
+-----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
 layer0.update = function(self, dt)
 end
 
@@ -499,6 +602,7 @@ layer.update = function(self, dt)
     if love.keyboard.isDown('w') or love.keyboard.isDown('up') then
         self.sprites.player.y = self.sprites.player.y - speed * dt
         movePlayer('up', self.sprites.player.ob, self.sprites.player, dt)
+        walking:play()
 
     end
 
@@ -506,6 +610,7 @@ layer.update = function(self, dt)
     if love.keyboard.isDown('s') or love.keyboard.isDown('down') then
         self.sprites.player.y = self.sprites.player.y + speed * dt
         movePlayer('down', self.sprites.player.ob, self.sprites.player, dt)
+        walking:play()
     end
 
     -- Move player left.
@@ -513,6 +618,7 @@ layer.update = function(self, dt)
         self.sprites.player.x = self.sprites.player.x - speed * dt
         movePlayer('left', self.sprites.player.ob, self.sprites.player, dt)
         self.sprites.player.ob:flip(1)
+        walking:play()
     end
 
     -- Move player right.
@@ -520,13 +626,19 @@ layer.update = function(self, dt)
         self.sprites.player.x = self.sprites.player.x + speed * dt
         movePlayer('right', self.sprites.player.ob, self.sprites.player, dt)
         self.sprites.player.ob:flip(-1)
+        walking:play()
     end
 
+    -- Attack with player.
     if love.keyboard.isDown('k') then
         enemySelector(self.sprites.player.ob, self.sprites.player, dt)
         swing:play()
     end
 
 end
+
+layer1.update = function(self, dt)
+end
+-----------------------------------------------------------------------
 
 return map

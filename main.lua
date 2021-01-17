@@ -4,39 +4,47 @@ local map = require 'map'
 -- Load various things in love and the game itself.
 function love.load()
 
+    love.window.setMode(1024, 720, {
+        resizable = true,
+        vsync = true,
+        minwidth = 400,
+        minheight = 300
+    })
     love.graphics.setBackgroundColor(0, 0, 0)
     local font = love.graphics.newFont()
     love.graphics.setFont(font, 144)
-    music = love.audio.newSource('assets/sounds/Dungeon-Cave_loop.ogg', 'stream')
-    music:setVolume(0.7)
+    -- music = love.audio.newSource('assets/sounds/Dungeon-Cave_loop.ogg', 'stream')
+    music = love.audio.newSource('assets/sounds/cave/cave.mp3', 'stream')
+    music:setVolume(1)
     music:setLooping(true)
     music:play()
 
 end
 
 function love.update(dt)
-    map:update(dt)
+    if map:getAliveStatus() == true then
+        map:update(dt)
+    end
 end
 
 function love.draw()
     if map:getAliveStatus() == true then
-        love.graphics.print('AD: ~30 DPS', 840, 710)
-        love.graphics.print('Health:', 920, 710)
-        love.graphics.print(map:drawHealth(), 980, 710)
+        love.graphics.print('AD: ~30 DPS', love.graphics.getWidth() - 450, love.graphics.getHeight() - 50)
+        love.graphics.print('Health:', love.graphics.getWidth() - 350, love.graphics.getHeight() - 50)
+        love.graphics.print(map:drawHealth(), love.graphics.getWidth() - 280, love.graphics.getHeight() - 50)
 
         -- Scale world.
         local scale = 3
         local screen_width = love.graphics.getWidth() / scale
         local screen_height = love.graphics.getHeight() / scale
-        local sw, sh = 250, 200
 
         -- Translate world so that player is always centred
         local player = map.layers["Sprites"].sprites.player
-        local tx = math.floor(player.x - sw / 2)
-        local ty = math.floor(player.y - sh / 2)
+        local tx = math.floor(player.x - (screen_width - 120) / 2)
+        local ty = math.floor(player.y - (screen_height - 50) / 2)
 
         -- As basic as fog of war can get. Thank god I wasted 10 hours on more unoptimal solutions.
-        map:resize(250, 200)
+        map:resize(screen_width - 120, screen_height - 50)
         map:draw(-tx, -ty, scale, scale)
 
         -- Reset colour.
@@ -51,7 +59,7 @@ function love.draw()
         love.graphics.setFont(myFont)
         love.graphics.setColor(255, 255, 255, 255)
         love.graphics.setBackgroundColor(0, 0, 0)
-        love.graphics.print('AND HE LIVED HAPPILY NEVER AFTER', 220, 320)
+        love.graphics.print('AND HE LIVED HAPPILY NEVER AFTER', love.graphics.getWidth() / 6, love.graphics.getHeight() / 3)
         love.graphics.print('press "r" to try again, if you dare', 260, 380)
         love.graphics.print('press "q" to quit and cry about it', 265, 440)
     end
