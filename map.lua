@@ -9,6 +9,15 @@ local sw = require 'potion_swiftness'
 local cellsize = 16
 local map_path = 'assets/dungeon/beta_version.lua'
 
+-- Added sounds.
+swing = love.audio.newSource('assets/sounds/attack/swing.wav', 'stream')
+swing:setVolume(0.4)
+swing:setLooping(false)
+
+drink = love.audio.newSource('assets/sounds/potions/bottle.wav', 'stream')
+drink:setVolume(0.9)
+drink:setLooping(false)
+
 -- local timer = 5
 -- local initialtime = love.timer.getTime()
 
@@ -115,8 +124,9 @@ function movePlayer(direction, po, p, dt)
             --------------------------------------------
         elseif cols[i].other.name == 'health_potion' then
             local potion = cols[i].other.ob
-            po:heal(potion:take(po))
+            po:heal(potion:take(po), p, world)
             world:remove(cols[i].other)
+            drink:play()
             --------------------------------------------
             -- Handle drinking potion of swiftness.
             --------------------------------------------
@@ -125,6 +135,7 @@ function movePlayer(direction, po, p, dt)
             po:changeSpeed(potion:take())
             world:remove(cols[i].other)
             initialtime = love.timer.getTime()
+            drink:play()
             --------------------------------------------
         else
             print('collided with ' .. tostring(cols[i].other))
@@ -155,7 +166,7 @@ function moveEnemy(eo, po, e, p, dt)
             if po.health <= 0 then
                 po:die()
                 po:revive()
-                local oX, oY = po:resetPos()
+                po:resetPos()
                 p = po:updateSpritePos(p)
                 -- p.x, p.y = oX, oY
                 world:remove(p)
@@ -170,7 +181,7 @@ function moveEnemy(eo, po, e, p, dt)
             if po.health <= 0 then
                 po:die()
                 po:revive()
-                local oX, oY = po:resetPos()
+                po:resetPos()
                 p = po:updateSpritePos(p)
                 -- p.x, p.y = oX, oY
                 world:remove(p)
@@ -513,6 +524,7 @@ layer.update = function(self, dt)
 
     if love.keyboard.isDown('k') then
         enemySelector(self.sprites.player.ob, self.sprites.player, dt)
+        swing:play()
     end
 
 end

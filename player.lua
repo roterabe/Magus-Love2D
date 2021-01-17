@@ -100,8 +100,17 @@ function Player:revive()
 end
 
 -- Update player's current health after changes.
-function Player:heal(health)
+function Player:heal(health, p, world)
     self.health = health
+    if self.health <= 0 then
+        self:die()
+        self:revive()
+        self:resetPos()
+        world:remove(p)
+        self:updateSpritePos(p)
+        world:add(p, p.x, p.y, 16 / 10, 16 / 50)
+
+    end
 end
 
 function Player:changeSpeed(speed)

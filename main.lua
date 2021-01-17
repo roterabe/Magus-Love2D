@@ -7,6 +7,10 @@ function love.load()
     love.graphics.setBackgroundColor(0, 0, 0)
     local font = love.graphics.newFont()
     love.graphics.setFont(font, 144)
+    music = love.audio.newSource('assets/sounds/Dungeon-Cave_loop.ogg', 'stream')
+    music:setVolume(0.7)
+    music:setLooping(true)
+    music:play()
 
 end
 
