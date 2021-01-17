@@ -59,9 +59,12 @@ function love.draw()
         love.graphics.setFont(myFont)
         love.graphics.setColor(255, 255, 255, 255)
         love.graphics.setBackgroundColor(0, 0, 0)
-        love.graphics.print('AND HE LIVED HAPPILY NEVER AFTER', love.graphics.getWidth() / 6, love.graphics.getHeight() / 3)
-        love.graphics.print('press "r" to try again, if you dare', 260, 380)
-        love.graphics.print('press "q" to quit and cry about it', 265, 440)
+        love.graphics.printf('AND HE LIVED HAPPILY NEVER AFTER', 0, love.graphics.getHeight() / 3,
+            love.graphics.getWidth(), 'center')
+        love.graphics.printf('press "r" to try again, if you dare', 0, love.graphics.getHeight() / 2,
+            love.graphics.getWidth(), 'center')
+        love.graphics.printf('press "q" to quit and cry about it', 0, love.graphics.getHeight() / 1.5,
+            love.graphics.getWidth(), 'center')
     end
     -- Collision map.
     -- map:bump_draw(world)

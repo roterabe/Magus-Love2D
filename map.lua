@@ -17,7 +17,7 @@ swing:setVolume(0.3)
 swing:setLooping(false)
 
 drink = love.audio.newSource('assets/sounds/potions/bottle.wav', 'stream')
-drink:setVolume(0.7)
+drink:setVolume(0.4)
 drink:setLooping(false)
 
 walking = love.audio.newSource('assets/sounds/walking/walk1.mp3', 'stream')
@@ -48,20 +48,27 @@ local layer1 = map:addCustomLayer('Tresr', 3)
 -- Position main character on spawn points.
 local spawn = {}
 spawn.key = {}
+spawn.returning = {}
 for k, object in pairs(map.objects) do
     if object.name == 'Player' then
-        spawn.a = object
+        spawn.returning.a = object
     elseif object.name == 'Player0' then
-        spawn.b = object
+        spawn.returning.b = object
     elseif object.name == 'Player1' then
+        spawn.returning.c = object
+    elseif object.name == 'Spawn' then
+        spawn.original = object
+    elseif object.name == 'Player_' then
+        spawn.a = object
+    elseif object.name == 'Player0_' then
+        spawn.b = object
+    elseif object.name == 'Player1_' then
         spawn.c = object
-    elseif object.name == 'Player3' then
-        spawn.d = object
-    elseif object.name == 'return' then
-        spawn.returning = object
-        -- Load treasure positionsio.close(
+        -- Load treasure positions
     elseif object.name == 'key' then
-        spawn.key.a = object
+        spawn.key[1] = object
+    elseif object.name == 'key0' then
+        spawn.key[2] = object
     end
 end
 -----------------------------------------------------------------------
@@ -125,25 +132,25 @@ function movePlayer(direction, po, p, dt)
     end
 
     for i = 1, len do
-        -- Teleport for first dungeon.
+        -- Teleport for first dungeon and back.
         --------------------------------------------
         if cols[i].other.name == 'ladder' then
-            teleportPlayer(po, p, spawn.b)
-        elseif cols[i].other.name == 'ladder0' then
-            teleportPlayer(po, p, spawn.returning)
+            teleportPlayer(po, p, spawn.a)
+        elseif cols[i].other.name == 'ladder_' then
+            teleportPlayer(po, p, spawn.returning.a)
             --------------------------------------------
             -- Teleport to second dungeon.
             --------------------------------------------
-        elseif cols[i].other.name == 'ladder2' then
+        elseif cols[i].other.name == 'ladder0' then
             -- To be fixed to different return spot.
-            teleportPlayer(po, p, spawn.c)
-        elseif cols[i].other.name == 'ladder1' then
-            teleportPlayer(po, p, spawn.returning)
+            teleportPlayer(po, p, spawn.b)
+        elseif cols[i].other.name == 'ladder0_' then
+            teleportPlayer(po, p, spawn.returning.b)
             --------------------------------------------
-        elseif cols[i].other.name == 'ladder3_1' then
-            teleportPlayer(po, p, spawn.d)
-        elseif cols[i].other.name == 'ladder3' then
-            teleportPlayer(po, p, spawn.returning)
+        elseif cols[i].other.name == 'ladder1' then
+            teleportPlayer(po, p, spawn.c)
+        elseif cols[i].other.name == 'ladder1_' then
+            teleportPlayer(po, p, spawn.returning.c)
             --------------------------------------------
             -- Handle drinking health potion.
             --------------------------------------------
@@ -313,7 +320,7 @@ local tresr_spr = love.graphics.newQuad(240, 176, 16, 16, spr_list:getWidth(), s
 -- Create player obj.
 -----------------------------------------------------------------------
 local player = character:new()
-player:setPos(spawn.a.x, spawn.a.y)
+player:setPos(spawn.original.x, spawn.original.y)
 
 -- Set player sprite.
 player:setSprite(char_spr)
@@ -400,6 +407,7 @@ tmp = {
     name = 'enemy_troll',
     ob = enemies[101]
 }
+table.insert(layer.sprites, tmp)
 -----------------------------------------------------------------------
 
 -- Generate health potion objects.
@@ -467,9 +475,11 @@ end
 -- Generate treasure box objects.
 -----------------------------------------------------------------------
 local treasr = {}
-treasr[1] = tr:new()
-treasr[1]:setPos(spawn.key.a.x, spawn.key.a.y)
-for i = 1, 1 do
+for i = 1, 2 do
+    treasr[i] = tr:new()
+    treasr[i]:setPos(spawn.key[i].x, spawn.key[i].y)
+end
+for i = 1, 2 do
     tmp = {
         name = 'treasure',
         sprite = tresr_spr,
@@ -525,17 +535,15 @@ layer.draw = function(self)
         math.floor(self.sprites.player.y), 0, self.sprites.player.ob.dir, 1, 16 / 2, 16 / 1.1)
 
     -- Draw enemy sprites on layer.
-    for i = 1, 102 do
-        for key, value in pairs(self.sprites) do
-            if value.name == 'enemy' and value.ob.alive == true then
-                local enemy = value
-                love.graphics.draw(spr_list, enemy.sprite, math.floor(enemy.x), math.floor(enemy.y), 0, enemy.ob.dir, 1,
-                    16 / 2, 16 / 1.1)
-            elseif value.name == 'enemy_troll' and value.ob.alive == true then
-                local enemy = value
-                love.graphics.draw(spr_list, enemy.sprite, math.floor(enemy.x), math.floor(enemy.y), 0, enemy.ob.dir, 1,
-                    32 / 2, 32 / 2)
-            end
+    for key, value in pairs(self.sprites) do
+        if value.name == 'enemy' and value.ob.alive == true then
+            local enemy = value
+            love.graphics.draw(spr_list, enemy.sprite, math.floor(enemy.x), math.floor(enemy.y), 0, enemy.ob.dir, 1,
+                16 / 2, 16 / 1.1)
+        elseif value.name == 'enemy_troll' and value.ob.alive == true then
+            local enemy = value
+            love.graphics.draw(spr_list, enemy.sprite, math.floor(enemy.x), math.floor(enemy.y), 0, enemy.ob.dir, 1,
+                32 / 2, 32 / 2)
         end
     end
 
@@ -548,27 +556,23 @@ end
 
 layer0.draw = function(self)
     -- Draw health potion sprites.
-    for i = 1, 150 do
-        for key, value in pairs(self.potions) do
-            if value.name == 'health_potion' and value.ob.taken == false then
-                love.graphics.draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2,
-                    16 / 2)
-            elseif value.name == 'potion_of_swiftness' and value.ob.taken == false then
-                love.graphics.draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2,
-                    16 / 2)
-            end
+    for key, value in pairs(self.potions) do
+        if value.name == 'health_potion' and value.ob.taken == false then
+            love.graphics
+                .draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2, 16 / 2)
+        elseif value.name == 'potion_of_swiftness' and value.ob.taken == false then
+            love.graphics
+                .draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2, 16 / 2)
         end
     end
 end
 
 layer1.draw = function(self)
     -- Draw treasure sprites.
-    for i = 1, 1 do
-        for key, value in pairs(self.treasures) do
-            if value.name == 'treasure' and value.ob.key == true then
-                love.graphics.draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2,
-                    16 / 2)
-            end
+    for key, value in pairs(self.treasures) do
+        if value.name == 'treasure' and value.ob.key == true then
+            love.graphics
+                .draw(spr_list, value.sprite, math.floor(value.x), math.floor(value.y), 0, 1, 1, 16 / 2, 16 / 2)
         end
     end
 end
