@@ -20,10 +20,52 @@ drink = love.audio.newSource('assets/sounds/potions/bottle.wav', 'stream')
 drink:setVolume(0.4)
 drink:setLooping(false)
 
+impact = love.audio.newSource('assets/sounds/enemy/attack_impact.wav', 'stream')
+impact:setVolume(0.5)
+impact:setLooping(false)
+
 walking = love.audio.newSource('assets/sounds/walking/walk1.mp3', 'stream')
 walking:setVolume(0.5)
 walking:setLooping(false)
+
+enemy_voice = love.audio.newSource('assets/sounds/enemy/shade11.wav', 'stream')
+enemy_voice:setVolume(0.2)
+enemy_voice:setLooping(false)
+
+enemy_attack = love.audio.newSource('assets/sounds/enemy/attack_small.wav', 'stream')
+enemy_attack:setVolume(0.5)
+enemy_attack:setLooping(false)
+
+keys = love.audio.newSource('assets/sounds/keys/metal-ringing.wav', 'stream')
+keys:setVolume(0.5)
+keys:setLooping(false)
 -------------------------------------------------------------------------------
+
+-- Load all sprite quads.
+-----------------------------------------------------------------------
+local spr_list = love.graphics.newImage('assets/dungeon/0x72_16x16DungeonTileset.v4.png')
+
+-- Load specific player sprite.
+local char_spr = love.graphics.newQuad(80, 144, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load specific enemy sprite.
+local en_spr = love.graphics.newQuad(80, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load health potion sprite
+local health_pt = love.graphics.newQuad(112, 208, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load potion of swiftness sprite.
+local pt_swift = love.graphics.newQuad(144, 208, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load enemy troll sprite.
+local troll_spr = love.graphics.newQuad(96, 176, 32, 32, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load treasure chest sprite.
+local tresr_spr = love.graphics.newQuad(240, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load final treasure chest sprite.
+local tresr_spr0 = love.graphics.newQuad(224, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+-----------------------------------------------------------------------
 
 -- local timer = 5
 -- local initialtime = love.timer.getTime()
@@ -42,6 +84,8 @@ local layer = map:addCustomLayer('Sprites', 7)
 
 -- Create layer for trasure keys.
 local layer1 = map:addCustomLayer('Tresr', 3)
+
+map:bump_init(world)
 -----------------------------------------------------------------------
 
 -----------------------------------------------------------------------
@@ -49,6 +93,7 @@ local layer1 = map:addCustomLayer('Tresr', 3)
 local spawn = {}
 spawn.key = {}
 spawn.returning = {}
+spawn.ambush = {}
 for k, object in pairs(map.objects) do
     if object.name == 'Player' then
         spawn.returning.a = object
@@ -69,7 +114,195 @@ for k, object in pairs(map.objects) do
         spawn.key[1] = object
     elseif object.name == 'key0' then
         spawn.key[2] = object
+    elseif object.name == 'key1' then
+        spawn.key[3] = object
+    elseif object.name == 'trololo' then
+        spawn.ambush[1] = object
+    elseif object.name == 'trololo0' then
+        spawn.ambush[2] = object
     end
+end
+-----------------------------------------------------------------------
+
+-- Create player obj.
+-----------------------------------------------------------------------
+local player = character:new()
+player:setPos(spawn.original.x, spawn.original.y)
+
+-- Set player sprite.
+player:setSprite(char_spr)
+-----------------------------------------------------------------------
+
+-- Create layer sprite space to display on map.
+-----------------------------------------------------------------------
+layer.sprites = {
+    player = {
+        sprite = player.sprite,
+        x = player.xPos,
+        y = player.yPos,
+        -- ox = player.sprite:getWidth() / 2,
+        -- oy = player.sprite:getHeight() / 1.35,
+        collidable = true,
+        name = 'player',
+        ob = player
+    }
+}
+-----------------------------------------------------------------------
+
+-- Layer for setting all potions.
+-----------------------------------------------------------------------
+layer0.potions = {}
+-----------------------------------------------------------------------
+
+-- Layer for setting all treasures.
+-----------------------------------------------------------------------
+layer1.treasures = {}
+-----------------------------------------------------------------------
+
+-- Generate enemies.
+-----------------------------------------------------------------------
+local enemies = {}
+local coord = {}
+coord.x, coord.y = 200, 200
+math.randomseed(os.clock() * 100000000000)
+for i = 1, 150 do
+    enemies[i] = enemy:new()
+    enemies[i]:setPos(coord.x, coord.y)
+    if i < 80 then
+        coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+    elseif i < 100 then
+        coord.x, coord.y = math.random(2545, 3100), math.random(60, 746)
+    elseif i < 130 then
+        coord.x, coord.y = math.random(3704, 4432), math.random(36, 765)
+    else
+        coord.x, coord.y = math.random(9168, 9580), math.random(9425, 9566)
+    end
+end
+enemies[151] = enemy:new()
+enemies[151]:setPos(spawn.returning.a.x, spawn.returning.a.y)
+enemies[151]:setSprite(troll_spr)
+enemies[151]:changeDamage(10)
+
+-- Set sprite for enemy characters.
+for i = 1, 150 do
+    enemies[i]:setSprite(en_spr)
+end
+-----------------------------------------------------------------------
+
+-- Create enemy sprites.
+-----------------------------------------------------------------------
+local tmp = {}
+local dir = 1;
+for i = 1, 150 do
+    if i % 2 == 0 or i % 5 == 0 then
+        dir = dir * -1
+    end
+    tmp = {
+        sprite = enemies[i].sprite,
+        x = enemies[i].xPos,
+        y = enemies[i].yPos,
+        collidable = true,
+        dir = dir,
+        name = 'enemy',
+        ob = enemies[i]
+    }
+    table.insert(layer.sprites, tmp)
+end
+
+tmp = {
+    sprite = enemies[151].sprite,
+    x = enemies[151].xPos,
+    y = enemies[151].yPos,
+    collidable = true,
+    dir = 1,
+    name = 'enemy_troll',
+    ob = enemies[151]
+}
+table.insert(layer.sprites, tmp)
+-----------------------------------------------------------------------
+
+-- Generate health potion objects.
+-----------------------------------------------------------------------
+local hpotions = {}
+local fate
+coord.x, coord.y = 300, 300
+math.randomseed(os.clock() * 100000000000)
+for i = 1, 100 do
+    hpotions[i] = hp:new()
+    hpotions[i]:setPos(coord.x, coord.y)
+    --[[ for i = 1, 3 do
+        math.random(10000, 65000)
+    end ]]
+    if math.random(10) % 5 == 0 then
+        hpotions[i]:damage()
+    end
+    if i < 60 then
+        coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+    else
+        coord.x, coord.y = math.random(2545, 3100), math.random(60, 746)
+    end
+
+end
+-----------------------------------------------------------------------
+
+-- Generate potion of swiftness objects.
+-----------------------------------------------------------------------
+local swpotions = {}
+coord.x, coord.y = 280, 280
+math.randomseed(os.clock() * 100000000000)
+for i = 1, 50 do
+    swpotions[i] = sw:new()
+    swpotions[i]:setPos(coord.x, coord.y)
+    coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
+end
+-----------------------------------------------------------------------
+
+-- Set health potion sprites on map layer.
+-----------------------------------------------------------------------
+for i = 1, 100 do
+    tmp = {
+        name = 'health_potion',
+        sprite = health_pt,
+        x = hpotions[i].x,
+        y = hpotions[i].y,
+        ob = hpotions[i]
+    }
+    table.insert(layer0.potions, tmp)
+end
+
+-- Set sprites for potion of swiftness on map layer.
+for i = 1, 50 do
+    tmp = {
+        name = 'potion_of_swiftness',
+        sprite = pt_swift,
+        x = swpotions[i].x,
+        y = swpotions[i].y,
+        ob = swpotions[i]
+    }
+    table.insert(layer0.potions, tmp)
+end
+-----------------------------------------------------------------------
+
+-- Generate treasure box objects.
+-----------------------------------------------------------------------
+local treasr = {}
+for i = 1, 3 do
+    treasr[i] = tr:new()
+    treasr[i]:setPos(spawn.key[i].x, spawn.key[i].y)
+end
+for i = 1, 3 do
+    tmp = {
+        name = 'treasure',
+        sprite = tresr_spr,
+        x = treasr[i].x,
+        y = treasr[i].y,
+        ob = treasr[i]
+    }
+    if i == 3 then
+        tmp.ob.final = true
+        tmp.sprite = tresr_spr0
+    end
+    table.insert(layer1.treasures, tmp)
 end
 -----------------------------------------------------------------------
 
@@ -84,6 +317,10 @@ local playerFilter = function(item, other)
     if other.name == 'health_potion' then
         return 'cross'
     elseif other.name == 'potion_of_swiftness' then
+        return 'cross'
+    elseif other.name == 'trigger' then
+        return 'cross'
+    elseif other.name == 'trigger_boss' then
         return 'cross'
     else
         return 'slide'
@@ -171,11 +408,45 @@ function movePlayer(direction, po, p, dt)
             --------------------------------------------
             -- Handle grabbing keys.
             --------------------------------------------
-        elseif cols[i].other.name == 'treasure' then
+        elseif cols[i].other.name == 'treasure' and cols[i].other.ob.final == false then
             local tresasure = cols[i].other.ob
+            keys:play()
             world:remove(cols[i].other)
             po:takeKey(treasure:take())
             print(po.keys)
+            --------------------------------------------
+            -- Handle last treasure.
+            --------------------------------------------
+        elseif cols[i].other.name == 'treasure' and cols[i].other.ob.final == true and po.keys >= 2 then
+            local tresasure = cols[i].other.ob
+            keys:play()
+            world:remove(cols[i].other)
+            po:takeKey(treasure:take())
+            po:takeFinalKey(treasure:take())
+            print(po.keys)
+            --------------------------------------------
+
+            --------------------------------------------
+        elseif cols[i].other.name == 'trigger' then
+            world:remove(cols[i].other)
+            local en = {}
+            for i = 1, 2 do
+                en[i] = enemy:new()
+                en[i]:setPos(spawn.ambush[i].x, spawn.ambush[i].y)
+                en[i]:setSprite(troll_spr)
+                en[i]:changeDamage(10)
+                tmp = {
+                    sprite = en[i].sprite,
+                    name = 'enemy_troll',
+                    x = en[i].xPos,
+                    y = en[i].yPos,
+                    collidable = true,
+                    dir = 1,
+                    ob = en[i]
+                }
+                table.insert(layer.sprites, tmp)
+                world:add(tmp, tmp.x, tmp.y, 10, 20)
+            end
             --------------------------------------------
         else
             print('collided with ' .. tostring(cols[i].other))
@@ -197,6 +468,7 @@ function moveEnemy(eo, po, e, p, dt)
         if items[i].name == 'player' then
             -- print(items[i].info)
             goalX, goalY = eo:chase(e.x, e.y, p.x, p.y, dt)
+            eo.voice = false
         end
     end
 
@@ -213,7 +485,9 @@ function moveEnemy(eo, po, e, p, dt)
                 -- world:add(p, p.x, p.y, p.sprite:getWidth() / 100, p.sprite:getHeight() / 50)
                 world:add(p, p.x, p.y, 16 / 10, 16 / 50)
             end
+            enemy_attack:play()
             po.health = eo:attack(po)
+            impact:play()
             print('Miss me with that gay shit.')
         end
     elseif e.name == 'enemy_troll' then
@@ -228,6 +502,7 @@ function moveEnemy(eo, po, e, p, dt)
                 -- world:add(p, p.x, p.y, p.sprite:getWidth() / 100, p.sprite:getHeight() / 50)
                 world:add(p, p.x, p.y, 16 / 10, 16 / 50)
             end
+            enemy_attack:play()
             po.health = eo:attack(po)
             print('Miss me with that troll shit.')
         end
@@ -262,6 +537,7 @@ function enemySelector(po, p, dt)
             local target = items[i]
             if dist(p.x, p.y, target.x, target.y) < 10 then
                 if items[i].ob.health <= 0 then
+                    enemy_voice:play()
                     items[i].ob.alive = false
                     world:remove(items[i])
                     break
@@ -292,207 +568,13 @@ end
 function map:getAliveStatus()
     return layer.sprites.player.ob.alive
 end
+
+function map:getWinStatus()
+    return layer.sprites.player.ob.win
+end
 ------------------------------------------------------------------
 
--- Load all sprites.
 -----------------------------------------------------------------------
-local spr_list = love.graphics.newImage('assets/dungeon/0x72_16x16DungeonTileset.v4.png')
-
--- Load specific player sprite.
-local char_spr = love.graphics.newQuad(80, 144, 16, 16, spr_list:getWidth(), spr_list:getHeight())
-
--- Load specific enemy sprite.
-local en_spr = love.graphics.newQuad(80, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
-
--- Load health potion sprite
-local health_pt = love.graphics.newQuad(112, 208, 16, 16, spr_list:getWidth(), spr_list:getHeight())
-
--- Load potion of swiftness sprite.
-local pt_swift = love.graphics.newQuad(144, 208, 16, 16, spr_list:getWidth(), spr_list:getHeight())
-
--- Load enemy troll sprite.
-local troll_spr = love.graphics.newQuad(96, 176, 32, 32, spr_list:getWidth(), spr_list:getHeight())
-
--- Load treasure chest sprite.
-local tresr_spr = love.graphics.newQuad(240, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
------------------------------------------------------------------------
-
--- Create player obj.
------------------------------------------------------------------------
-local player = character:new()
-player:setPos(spawn.original.x, spawn.original.y)
-
--- Set player sprite.
-player:setSprite(char_spr)
------------------------------------------------------------------------
-
--- Create layer sprite space to display on map.
------------------------------------------------------------------------
-layer.sprites = {
-    player = {
-        sprite = player.sprite,
-        x = player.xPos,
-        y = player.yPos,
-        -- ox = player.sprite:getWidth() / 2,
-        -- oy = player.sprite:getHeight() / 1.35,
-        collidable = true,
-        name = 'player',
-        ob = player
-    }
-}
------------------------------------------------------------------------
-
--- Layer for setting all potions.
------------------------------------------------------------------------
-layer0.potions = {}
------------------------------------------------------------------------
-
--- Layer for setting all treasures.
------------------------------------------------------------------------
-layer1.treasures = {}
------------------------------------------------------------------------
-
--- Generate enemies.
------------------------------------------------------------------------
-local enemies = {}
-local coord = {}
-coord.x, coord.y = 200, 200
-math.randomseed(os.clock() * 100000000000)
-for i = 1, 100 do
-    enemies[i] = enemy:new()
-    enemies[i]:setPos(coord.x, coord.y)
-    if i < 80 then
-        coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
-    else
-        coord.x, coord.y = math.random(2545, 3100), math.random(60, 746)
-    end
-end
-enemies[101] = enemy:new()
-enemies[101]:setPos(spawn.returning.x, spawn.returning.y)
-enemies[101]:setSprite(troll_spr)
-enemies[101]:changeDamage(10)
-
--- Set sprite for enemy characters.
-for i = 1, 100 do
-    enemies[i]:setSprite(en_spr)
-end
------------------------------------------------------------------------
-
--- Create enemy sprites.
------------------------------------------------------------------------
-local tmp = {}
-local dir = 1;
-for i = 1, 100 do
-    if i % 2 == 0 or i % 5 == 0 then
-        dir = dir * -1
-    end
-    tmp = {
-        sprite = enemies[i].sprite,
-        x = enemies[i].xPos,
-        y = enemies[i].yPos,
-        collidable = true,
-        dir = dir,
-        name = 'enemy',
-        ob = enemies[i]
-    }
-    table.insert(layer.sprites, tmp)
-end
-
-tmp = {
-    sprite = enemies[101].sprite,
-    x = enemies[101].xPos,
-    y = enemies[101].yPos,
-    collidable = true,
-    dir = 1,
-    name = 'enemy_troll',
-    ob = enemies[101]
-}
-table.insert(layer.sprites, tmp)
------------------------------------------------------------------------
-
--- Generate health potion objects.
------------------------------------------------------------------------
-local hpotions = {}
-local fate
-coord.x, coord.y = 300, 300
-math.randomseed(os.clock() * 100000000000)
-for i = 1, 100 do
-    hpotions[i] = hp:new()
-    hpotions[i]:setPos(coord.x, coord.y)
-    --[[ for i = 1, 3 do
-        math.random(10000, 65000)
-    end ]]
-    if math.random(10) % 5 == 0 then
-        hpotions[i]:damage()
-    end
-    if i < 60 then
-        coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
-    else
-        coord.x, coord.y = math.random(2545, 3100), math.random(60, 746)
-    end
-
-end
------------------------------------------------------------------------
-
--- Generate potion of swiftness objects.
------------------------------------------------------------------------
-local swpotions = {}
-coord.x, coord.y = 280, 280
-math.randomseed(os.clock() * 100000000000)
-for i = 1, 50 do
-    swpotions[i] = sw:new()
-    swpotions[i]:setPos(coord.x, coord.y)
-    coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
-end
------------------------------------------------------------------------
-
--- Set health potion sprites on map layer.
------------------------------------------------------------------------
-for i = 1, 100 do
-    tmp = {
-        name = 'health_potion',
-        sprite = health_pt,
-        x = hpotions[i].x,
-        y = hpotions[i].y,
-        ob = hpotions[i]
-    }
-    table.insert(layer0.potions, tmp)
-end
-
--- Set sprites for potion of swiftness on map layer.
-for i = 1, 50 do
-    tmp = {
-        name = 'potion_of_swiftness',
-        sprite = pt_swift,
-        x = swpotions[i].x,
-        y = swpotions[i].y,
-        ob = swpotions[i]
-    }
-    table.insert(layer0.potions, tmp)
-end
------------------------------------------------------------------------
-
--- Generate treasure box objects.
------------------------------------------------------------------------
-local treasr = {}
-for i = 1, 2 do
-    treasr[i] = tr:new()
-    treasr[i]:setPos(spawn.key[i].x, spawn.key[i].y)
-end
-for i = 1, 2 do
-    tmp = {
-        name = 'treasure',
-        sprite = tresr_spr,
-        x = treasr[i].x,
-        y = treasr[i].y,
-        ob = treasr[i]
-    }
-    table.insert(layer1.treasures, tmp)
-end
------------------------------------------------------------------------
-
------------------------------------------------------------------------
-map:bump_init(world)
 
 -- Add character to collision world.
 world:add(layer.sprites.player, layer.sprites.player.x, layer.sprites.player.y, 16 / 10, 16 / 50)
@@ -501,7 +583,7 @@ world:add(layer.sprites.player, layer.sprites.player.x, layer.sprites.player.y, 
 for key, value in pairs(layer.sprites) do
     if value.name == 'enemy' then
         world:add(value, value.x, value.y, 16 / 10, 16 / 50)
-    elseif value.name == 'enemy_troll' then
+    elseif value.name == 'enemy_troll' and value.ob.alive == true then
         world:add(value, value.x, value.y, 10, 20)
     end
 end

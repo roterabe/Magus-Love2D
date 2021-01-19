@@ -1,7 +1,8 @@
 treasure = {
     x = 0,
     y = 0,
-    key = true
+    key = true,
+    final = false
 }
 
 -- Initialize health potion object.

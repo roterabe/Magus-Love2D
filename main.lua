@@ -22,7 +22,7 @@ function love.load()
 end
 
 function love.update(dt)
-    if map:getAliveStatus() == true then
+    if map:getAliveStatus() == true and map:getWinStatus() == 0 then
         map:update(dt)
     end
 end
@@ -49,7 +49,7 @@ function love.draw()
 
         -- Reset colour.
         love.graphics.setColor(255, 255, 255, 255)
-    else
+    elseif map:getAliveStatus() == false then
         if love.keyboard.isDown('r') then
             love.event.quit('restart')
         elseif love.keyboard.isDown('q') then
@@ -64,6 +64,22 @@ function love.draw()
         love.graphics.printf('press "r" to try again, if you dare', 0, love.graphics.getHeight() / 2,
             love.graphics.getWidth(), 'center')
         love.graphics.printf('press "q" to quit and cry about it', 0, love.graphics.getHeight() / 1.5,
+            love.graphics.getWidth(), 'center')
+    elseif map:getWinStatus() == 1 then
+        if love.keyboard.isDown('r') then
+            love.event.quit('restart')
+        elseif love.keyboard.isDown('q') then
+            love.event.quit()
+        end
+        local myFont = love.graphics.newFont(45)
+        love.graphics.setFont(myFont)
+        love.graphics.setColor(255, 255, 255, 255)
+        love.graphics.setBackgroundColor(0, 0, 0)
+        love.graphics.printf('AND HE LIVED HAPPILY MAYBE AFTER', 0, love.graphics.getHeight() / 3,
+            love.graphics.getWidth(), 'center')
+        love.graphics.printf('press "r" to try again, if you\'d like to', 0, love.graphics.getHeight() / 2,
+            love.graphics.getWidth(), 'center')
+        love.graphics.printf('press "q" to quit and enjoy your life', 0, love.graphics.getHeight() / 1.5,
             love.graphics.getWidth(), 'center')
     end
     -- Collision map.

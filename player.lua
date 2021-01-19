@@ -12,6 +12,7 @@ Player = {
     dir = 1,
     lives = 1,
     keys = 0,
+    win = 0,
     alive = true
 }
 
@@ -122,4 +123,7 @@ function Player:takeKey(key)
     self.keys = self.keys + key
 end
 
+function Player:takeFinalKey(key)
+    self.win = key
+end
 return Player
