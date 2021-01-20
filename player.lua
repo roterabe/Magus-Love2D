@@ -1,5 +1,7 @@
 -- Default enemy object.
 local Player = {
+    name = 'player',
+    sprite = '',
     xPos = 0,
     yPos = 0,
     originX = 0,
@@ -53,7 +55,6 @@ end
 -- Set player sprite.
 function Player:setSprite(quad)
     self.sprite = quad
-    -- self.sprite = love.graphics.newImage(path)
 end
 
 -- Move player
@@ -62,16 +63,16 @@ function Player:move(direction, p, dt)
     local speed = self.speed
 
     if direction == 'up' then
-        goalX, goalY = p.x, p.y - speed * dt
+        goalX, goalY = p.xPos, p.yPos - speed * dt
     end
     if direction == 'down' then
-        goalX, goalY = p.x, p.y + speed * dt
+        goalX, goalY = p.xPos, p.yPos + speed * dt
     end
     if direction == 'left' then
-        goalX, goalY = p.x - speed * dt, p.y
+        goalX, goalY = p.xPos - speed * dt, p.yPos
     end
     if direction == 'right' then
-        goalX, goalY = p.x + speed * dt, p.y
+        goalX, goalY = p.xPos + speed * dt, p.yPos
     end
 
     self.xPos, self.yPos = goalX, goalY
@@ -102,15 +103,15 @@ function Player:revive()
 end
 
 -- Update player's current health after changes.
-function Player:heal(health, p, world)
+function Player:heal(health, world)
     self.health = health
     if self.health <= 0 then
         self:die()
         self:revive()
         self:resetPos()
-        world:remove(p)
-        self:updateSpritePos(p)
-        world:add(p, p.x, p.y, 16 / 10, 16 / 50)
+        world:remove(self)
+        --self:updateSpritePos(p)
+        world:add(self, self.xPos, self.yPos, 16 / 10, 16 / 50)
 
     end
 end

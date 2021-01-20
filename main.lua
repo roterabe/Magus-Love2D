@@ -29,6 +29,10 @@ end
 
 function love.draw()
     if map:getAliveStatus() == true and map:getWinStatus() == false then
+        love.graphics.print('Lives:', love.graphics.getWidth() - 580, love.graphics.getHeight() - 50)
+        love.graphics.print(map:getLives(), love.graphics.getWidth() - 540, love.graphics.getHeight() - 50)
+        love.graphics.print('Keys:', love.graphics.getWidth() - 520, love.graphics.getHeight() - 50)
+        love.graphics.print(map:getKeys(), love.graphics.getWidth() - 480, love.graphics.getHeight() - 50)
         love.graphics.print('AD: ~30 DPS', love.graphics.getWidth() - 450, love.graphics.getHeight() - 50)
         love.graphics.print('Health:', love.graphics.getWidth() - 350, love.graphics.getHeight() - 50)
         love.graphics.print(map:drawHealth(), love.graphics.getWidth() - 280, love.graphics.getHeight() - 50)
@@ -40,8 +44,8 @@ function love.draw()
 
         -- Translate world so that player is always centred
         local player = map.layers["Sprites"].sprites.player
-        local tx = math.floor(player.x - (screen_width - 120) / 2)
-        local ty = math.floor(player.y - (screen_height - 50) / 2)
+        local tx = math.floor(player.xPos - (screen_width - 120) / 2)
+        local ty = math.floor(player.yPos - (screen_height - 50) / 2)
 
         -- As basic as fog of war can get. Thank god I wasted 10 hours on more unoptimal solutions.
         map:resize(screen_width - 120, screen_height - 50)

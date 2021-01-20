@@ -1,4 +1,6 @@
 potion_swiftness = {
+    name = 'potion_of_swiftness',
+    sprite = '',
     x = 0,
     y = 0,
     speed = 70,
@@ -15,6 +17,10 @@ end
 
 function potion_swiftness:setPos(xPos, yPos)
     self.x, self.y = xPos, yPos
+end
+
+function potion_swiftness:setSprite(quad)
+    self.sprite = quad
 end
 
 function potion_swiftness:take()

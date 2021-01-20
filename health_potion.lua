@@ -1,4 +1,6 @@
 health_potion = {
+    name = 'health_potion',
+    sprite = '',
     x = 0,
     y = 0,
     hp = 50,
@@ -15,6 +17,10 @@ end
 
 function health_potion:setPos(xPos, yPos)
     self.x, self.y = xPos, yPos
+end
+
+function health_potion:setSprite(quad)
+    self.sprite = quad
 end
 
 function health_potion:take(po)

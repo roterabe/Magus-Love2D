@@ -1,5 +1,7 @@
 -- Default enemy object.
 local Enemy = {
+    name = 'enemy',
+    sprite = '',
     xPos = 0,
     yPos = 0,
     originX = 0,
@@ -8,6 +10,8 @@ local Enemy = {
     height = 16,
     damage = 1,
     health = 100,
+    dir = 1,
+    flip = 1,
     alive = true
 }
 
@@ -20,8 +24,8 @@ function Enemy:new(o)
 end
 
 -- Self explanatory.
-function Enemy:attack(po)
-    local result = po.health - self.damage
+function Enemy:attack(p)
+    local result = p.health - self.damage
     return result
 end
 
@@ -32,7 +36,7 @@ local axisY = false
 local direction = 0
 
 -- Default enemy movement.
-function Enemy:walk(goalX, goalY, dir, dt)
+function Enemy:walk(goalX, goalY, dt)
     local stoptimer = 5 -- 5 seconds
     local speed = 50
 
@@ -41,21 +45,21 @@ function Enemy:walk(goalX, goalY, dir, dt)
         direction = math.random(1, 1000323)
         initialtime = love.timer.getTime()
         if direction % 3 == 0 then
-            dir = dir * -1
+            self.dir = self.dir * -1
         else
-            dir = dir * 1
+            self.dir = self.dir * 1
         end
         -- dir = smartTimes % 3 == 0 and dir * -1 or dir * 1
         axisY = axisY == false and true or false
     end
 
     if axisY == true then
-        goalY = goalY + speed * dt * dir
+        goalY = goalY + speed * dt * self.dir
     else
-        goalX = goalX + speed * dt * dir
+        goalX = goalX + speed * dt * self.dir
     end
 
-    return goalX, goalY, dir
+    return goalX, goalY, self.dir
 
 end
 
@@ -68,14 +72,13 @@ function Enemy:setPos(xPos, yPos)
 end
 
 -- Flip sprite.
-function Enemy:flip(direction)
-    self.dir = direction
+function Enemy:flipEnemy(flip)
+    self.flip = flip
 end
 
 -- Set enemy sprite.
 function Enemy:setSprite(quad)
     self.sprite = quad
-    -- self.sprite = love.graphics.newImage(path)
 end
 
 -- Calculate distance between two points.
@@ -84,8 +87,9 @@ function dist(x1, y1, x2, y2)
 end
 
 -- Function to return what coordinates to chase.
-function Enemy:chase(actualX, actualY, playerX, playerY, dt)
+function Enemy:chase(playerX, playerY, dt)
     local speed = 80
+    local actualX, actualY = self.xPos, self.yPos
     local goalX = playerX - actualX
     local goalY = playerY - actualY
     local distance = math.sqrt(goalX * goalX + goalY * goalY)
@@ -99,6 +103,16 @@ end
 -- Change enemy object damage.
 function Enemy:changeDamage(damage)
     self.damage = damage
+end
+
+-- Change enemy object direction.
+function Enemy:changeDir(dir)
+    self.dir = dir
+end
+
+-- Change enemy type.
+function Enemy:changeType(type)
+    self.name = type
 end
 
 return Enemy
