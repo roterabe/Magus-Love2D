@@ -22,13 +22,13 @@ function love.load()
 end
 
 function love.update(dt)
-    if map:getAliveStatus() == true and map:getWinStatus() == 0 then
+    if map:getAliveStatus() == true and map:getWinStatus() == false then
         map:update(dt)
     end
 end
 
 function love.draw()
-    if map:getAliveStatus() == true then
+    if map:getAliveStatus() == true and map:getWinStatus() == false then
         love.graphics.print('AD: ~30 DPS', love.graphics.getWidth() - 450, love.graphics.getHeight() - 50)
         love.graphics.print('Health:', love.graphics.getWidth() - 350, love.graphics.getHeight() - 50)
         love.graphics.print(map:drawHealth(), love.graphics.getWidth() - 280, love.graphics.getHeight() - 50)
@@ -65,7 +65,7 @@ function love.draw()
             love.graphics.getWidth(), 'center')
         love.graphics.printf('press "q" to quit and cry about it', 0, love.graphics.getHeight() / 1.5,
             love.graphics.getWidth(), 'center')
-    elseif map:getWinStatus() == 1 then
+    elseif map:getWinStatus() == true then
         if love.keyboard.isDown('r') then
             love.event.quit('restart')
         elseif love.keyboard.isDown('q') then

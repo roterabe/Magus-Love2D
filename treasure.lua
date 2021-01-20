@@ -1,4 +1,4 @@
-treasure = {
+local treasure = {
     x = 0,
     y = 0,
     key = true,
@@ -19,7 +19,6 @@ end
 
 function treasure:take()
     self.key = false
-    return 1
 end
 
 return treasure

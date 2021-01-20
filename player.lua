@@ -1,5 +1,5 @@
 -- Default enemy object.
-Player = {
+local Player = {
     xPos = 0,
     yPos = 0,
     originX = 0,
@@ -10,9 +10,9 @@ Player = {
     health = 420,
     speed = 50,
     dir = 1,
-    lives = 1,
+    lives = 5,
     keys = 0,
-    win = 0,
+    win = false,
     alive = true
 }
 
@@ -119,11 +119,11 @@ function Player:changeSpeed(speed)
     self.speed = speed
 end
 
-function Player:takeKey(key)
-    self.keys = self.keys + key
+function Player:takeKey()
+    self.keys = self.keys + 1
 end
 
-function Player:takeFinalKey(key)
-    self.win = key
+function Player:takeFinalKey()
+    self.win = true
 end
 return Player

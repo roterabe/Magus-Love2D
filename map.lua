@@ -116,6 +116,8 @@ for k, object in pairs(map.objects) do
         spawn.key[2] = object
     elseif object.name == 'key1' then
         spawn.key[3] = object
+    elseif object.name == 'key2' then
+        spawn.key[4] = object
     elseif object.name == 'trololo' then
         spawn.ambush[1] = object
     elseif object.name == 'trololo0' then
@@ -286,11 +288,11 @@ end
 -- Generate treasure box objects.
 -----------------------------------------------------------------------
 local treasr = {}
-for i = 1, 3 do
+for i = 1, 4 do
     treasr[i] = tr:new()
     treasr[i]:setPos(spawn.key[i].x, spawn.key[i].y)
 end
-for i = 1, 3 do
+for i = 1, 4 do
     tmp = {
         name = 'treasure',
         sprite = tresr_spr,
@@ -409,20 +411,22 @@ function movePlayer(direction, po, p, dt)
             -- Handle grabbing keys.
             --------------------------------------------
         elseif cols[i].other.name == 'treasure' and cols[i].other.ob.final == false then
-            local tresasure = cols[i].other.ob
+            local treasure = cols[i].other.ob
             keys:play()
             world:remove(cols[i].other)
-            po:takeKey(treasure:take())
+            treasure:take()
+            po:takeKey()
             print(po.keys)
             --------------------------------------------
             -- Handle last treasure.
             --------------------------------------------
-        elseif cols[i].other.name == 'treasure' and cols[i].other.ob.final == true and po.keys >= 2 then
-            local tresasure = cols[i].other.ob
+        elseif cols[i].other.name == 'treasure' and cols[i].other.ob.final == true and po.keys >= 3 then
+            local treasure = cols[i].other.ob
             keys:play()
             world:remove(cols[i].other)
-            po:takeKey(treasure:take())
-            po:takeFinalKey(treasure:take())
+            treasure:take()
+            po:takeKey()
+            po:takeFinalKey()
             print(po.keys)
             --------------------------------------------
 

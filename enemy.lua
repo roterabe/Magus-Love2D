@@ -1,5 +1,5 @@
 -- Default enemy object.
-Enemy = {
+local Enemy = {
     xPos = 0,
     yPos = 0,
     originX = 0,
