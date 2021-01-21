@@ -4,7 +4,7 @@ local map = require 'map'
 -- Load various things in love and the game itself.
 function love.load()
 
-    love.window.setMode(1024, 720, {
+    love.window.setMode(1280, 720, {
         resizable = true,
         vsync = true,
         minwidth = 400,

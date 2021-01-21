@@ -46,12 +46,6 @@ function Player:resetPos()
     return self.originX, self.originY
 end
 
--- Self explanatory.
-function Player:updateSpritePos(p)
-    p.x, p.y = self.xPos, self.yPos
-    return p
-end
-
 -- Set player sprite.
 function Player:setSprite(quad)
     self.sprite = quad

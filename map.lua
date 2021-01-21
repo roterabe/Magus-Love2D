@@ -48,8 +48,20 @@ local spr_list = love.graphics.newImage('assets/dungeon/0x72_16x16DungeonTileset
 -- Load specific player sprite.
 local char_spr = love.graphics.newQuad(80, 144, 16, 16, spr_list:getWidth(), spr_list:getHeight())
 
--- Load specific enemy sprite.
+-- Load generic enemy sprite.
 local en_spr = love.graphics.newQuad(80, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load second enemy sprite.
+local en_spr_second = love.graphics.newQuad(32, 176, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load third enemy sprite.
+local en_spr_third = love.graphics.newQuad(32, 160, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load fourth enemy sprite.
+local en_spr_fourth = love.graphics.newQuad(48, 192, 16, 16, spr_list:getWidth(), spr_list:getHeight())
+
+-- Load fifth enemy sprite.
+local en_spr_fifth = love.graphics.newQuad(16, 192, 16, 16, spr_list:getWidth(), spr_list:getHeight())
 
 -- Load health potion sprite
 local health_pt = love.graphics.newQuad(112, 208, 16, 16, spr_list:getWidth(), spr_list:getHeight())
@@ -146,7 +158,7 @@ playerob:setSprite(char_spr)
 layer.sprites = {
     player = playerob
 }
-table.insert(layer.sprites, player)
+--table.insert(layer.sprites, player)
 -----------------------------------------------------------------------
 
 -- Layer for setting all potions.
@@ -167,25 +179,31 @@ coord.x, coord.y = 200, 200
 math.randomseed(os.clock() * 100000000000)
 for i = 1, 220 do
     enemies[i] = enemy:new()
-    enemies[i]:setSprite(en_spr)
     enemies[i]:setPos(coord.x, coord.y)
     if i % 2 == 0 or i % 5 == 0 then
         enemies[i]:changeDir(-1)
     end
-    table.insert(layer.sprites, enemies[i])
+    
     if i < 100 then
+        enemies[i]:setSprite(en_spr)
         coord.x, coord.y = math.random(200, 1850), math.random(200, 1850)
     elseif i < 130 then
+        enemies[i]:setSprite(en_spr)
         coord.x, coord.y = math.random(2545, 3100), math.random(60, 746)
     elseif i < 160 then
+        enemies[i]:setSprite(en_spr_third)
         coord.x, coord.y = math.random(3704, 4432), math.random(36, 765)
     elseif i < 200 then
+        enemies[i]:setSprite(en_spr_second)
         coord.x, coord.y = math.random(2563, 3234), math.random(1175, 1758)
     elseif i < 210 then
+        enemies[i]:setSprite(en_spr_fourth)
         coord.x, coord.y = math.random(8864, 9216), math.random(8864, 9020)
     else
+        enemies[i]:setSprite(en_spr_fifth)
         coord.x, coord.y = math.random(9168, 9580), math.random(9425, 9566)
     end
+    table.insert(layer.sprites, enemies[i])
 end
 enemies[221] = enemy:new()
 enemies[221]:setPos(spawn.returning.a.x, spawn.returning.a.y)
@@ -462,7 +480,6 @@ function moveEnemy(e, p, dt)
             enemy_attack:play()
             p.health = e:attack(p)
             impact:play()
-            print('Miss me with that gay shit.')
         end
     elseif e.name == 'enemy_troll' then
         if dist(e.xPos + 16, e.yPos + 16, p.xPos, p.yPos) < 30 then
@@ -475,7 +492,6 @@ function moveEnemy(e, p, dt)
             end
             enemy_attack:play()
             p.health = e:attack(p)
-            print('Miss me with that troll shit.')
         end
     end
     local actualX, actualY, cols, len = world:move(e, goalX, goalY, playerFilter)
@@ -507,13 +523,13 @@ function enemySelector(p, dt)
         if items[i].name == 'enemy' then
             local target = items[i]
             if dist(p.xPos, p.yPos, target.xPos, target.yPos) < 10 then
-                if items[i].health <= 0 then
+                if target.health <= 0 then
                     enemy_voice:play()
-                    items[i].alive = false
-                    world:remove(items[i])
+                    target.alive = false
+                    world:remove(target)
                     break
                 end
-                items[i].health = p:attack(items[i])
+                target.health = p:attack(target)
             end
         end
     end
